@@ -1,0 +1,402 @@
+VERSION ""
+
+
+NS_ : 
+        NS_DESC_
+        CM_
+        BA_DEF_
+        BA_
+        VAL_
+        CAT_DEF_
+        CAT_
+        FILTER
+        BA_DEF_DEF_
+        EV_DATA_
+        ENVVAR_DATA_
+        SGTYPE_
+        SGTYPE_VAL_
+        BA_DEF_SGTYPE_
+        BA_SGTYPE_
+        SIG_TYPE_REF_
+        VAL_TABLE_
+        SIG_GROUP_
+        SIG_VALTYPE_
+        SIGTYPE_VALTYPE_
+        BO_TX_BU_
+        BA_DEF_REL_
+        BA_REL_
+        BA_DEF_DEF_REL_
+        BU_SG_REL_
+        BU_EV_REL_
+        BU_BO_REL_
+        SG_MUL_VAL_
+
+BS_:
+
+BU_: PTC ECC 
+
+
+BO_ 432 ESP_0x1B0: 8 ECC
+ SG_ VehSpdVld : 23|2@0+ (1,0) [0|3] "" Vector__XXX,Vector__XXX,PTC,Vector__XXX
+ SG_ VehSpd : 31|16@0+ (0.1,0) [0|300] "km/h" Vector__XXX,Vector__XXX,PTC,Vector__XXX
+
+BO_ 531 VCU_0x213: 8 ECC
+ SG_ VCU_ActvDchaEnaFlg : 36|2@0+ (1,0) [0|3] "" Vector__XXX,PTC
+
+BO_ 1248 ECC_0x4E0: 8 ECC
+ SG_ ECC_TarPwr_PTC : 23|16@0+ (1,0) [0|10000] "W" PTC
+ SG_ ECC_EnaCmd_PTC : 55|2@0+ (1,0) [0|3] "" PTC
+ SG_ ECC_TarGear_PTC : 59|4@0+ (1,0) [0|15] "" PTC
+
+BO_ 909 ECC_0x38D: 8 ECC
+ SG_ ECC_PTCFBDut : 23|8@0+ (1,0) [0|255] "%" PTC
+
+BO_ 1316 PTC_0x524: 8 PTC
+ SG_ PTC_ErrCode : 21|6@0+ (1,0) [0|63] "" ECC
+ SG_ PTC_ErrorLevel : 23|2@0+ (1,0) [0|3] "" ECC
+ SG_ PTC_CrtPwr : 39|16@0+ (1,0) [0|10000] "" ECC
+ SG_ PTC_CrtT : 55|8@0+ (1,-48) [-48|207] "°C" ECC
+ SG_ PTC_IninSts : 56|1@0+ (1,0) [0|1] "" ECC
+ SG_ PTC_HVPwrSplySts : 57|1@0+ (1,0) [0|1] "" ECC
+ SG_ PTC_ActGear : 61|4@0+ (1,0) [0|15] "" ECC
+ SG_ PTC_Mod : 62|1@0+ (1,0) [0|1] "" ECC
+ SG_ PTC_HVIntlkFlt : 63|1@0+ (1,0) [0|1] "" ECC
+
+BO_ 1317 PTC_0x525: 8 PTC
+ SG_ PTC_PCBT : 23|8@0+ (1,-48) [-48|207] "" ECC
+ SG_ PTC_Crt : 31|16@0+ (0.001,0) [0|65.535] "" ECC
+ SG_ PTC_CrtSts : 41|2@0+ (1,0) [0|3] "" ECC
+ SG_ PTC_CrtVolt : 55|16@0+ (1,0) [0|1000] "" ECC
+
+BO_ 1361 TBOX_0x551: 8 ECC
+ SG_ TBOX_CrtTi_Day : 23|5@0+ (1,1) [1|31] "day" Vector__XXX,PTC
+ SG_ TBOX_CrtTi_Hr : 31|5@0+ (1,0) [0|23] "hour" Vector__XXX,PTC
+ SG_ TBOX_CrtTi_Mins : 37|6@0+ (1,0) [0|59] "mintue" Vector__XXX,PTC
+ SG_ TBOX_CrtTi_Yr : 47|8@0+ (1,2015) [2015|2270] "year" Vector__XXX,PTC
+ SG_ TBOX_CrtTi_Mth : 55|4@0+ (1,1) [1|12] "month" Vector__XXX,PTC
+ SG_ TBOX_CrtTi_Sec : 63|6@0+ (1,0) [0|59] "second" Vector__XXX,PTC
+
+BO_ 1694 PTC_0x69E: 8 PTC
+ SG_ PTC_SwVersS : 15|8@0+ (1,0) [0|255] "" ECC
+ SG_ PTC_PartVers : 23|32@0+ (1,0) [0|4294967295] "" ECC
+ SG_ PTC_HwVers : 55|8@0+ (1,0) [0|255] "" ECC
+ SG_ PTC_SwVersM : 63|8@0+ (1,0) [0|255] "" ECC
+
+BO_ 855 VCU_PDCU_0x357: 8 ECC
+ SG_ VCU_RefrshModRestrntFctCmd : 49|2@0+ (1,0) [0|3] "" Vector__XXX,Vector__XXX,PTC
+ SG_ VCU_InhibitFunCmdVld : 58|1@0+ (1,0) [0|1] "" Vector__XXX,Vector__XXX,PTC
+
+BO_ 1806 Diag_PTC_Req: 8 ECC
+
+BO_ 1934 Diag_PTC_Resp: 8 PTC
+
+BO_ 2015 Diag_FUN_Req: 8 ECC
+
+
+CM_ "Version:V1.0,Date:2024/11/8,Author:张长征李国萌,Review:,Approval:,Description:(PTC)EP阶段初版;
+Version:V1.1,Date:2024/11/28,Author:张长征,Review:,Approval:,Description:(PTC)新增VCU_PDCU_0x357报文（叶广辉-OA-20241104）；;
+Version:V1.3,Date:2025/1/20,Author:张长征,Review:,Approval:,Description:(PTC)PTC诊断报文Diag_PTC_Req、Diag_PTC_Resp ID更正为：0x70E、0x78E。;
+Version:V1.7,Date:2025/5/7,Author:张长征,Review:,Approval:,Description:(PTC)新增ECC_0x38D报文（房金伟-OA-20250415）;
+Version:V1.8,Date:2025/5/18,Author:张长征,Review:,Approval:,Description:(PTC)1、PTC_0x524帧删除“APTC1继电器1开关状态”、“APTC1继电器1的有效位状态”、“PTC进口温度”、“PTC出口温度”信号；
+2、PTC_0x524帧'PTC当前工作温度'、'PTC初始化状态'中文信号名称变更为'PTC本体温度'、'PTC初始化状态（自检）'；
+3、PTC_0x524帧增加'PTC故障代码'、'PTC 故障等级'信号；
+4、PTC_0x525帧增加'PTC当前工作电压'信号
+(房金伟-OA-20250415);
+Version:V1.9,Date:2025/8/25,Author:张长征,Review:,Approval:,Description:(PTC)更新PTC_0x69E帧'PTC主软件版本号'信号的物理最小值、总线最小值及初始值（李志超-OA-20250811）；;
+Version:V1.10,Date:2025/8/27,Author:张长征,Review:,Approval:,Description:(PTC)1、PTC_0x524帧增加'PTC高压互锁故障_P164D94'信号；
+2、PTC_0x524帧'PTC故障代码' 信号的信号值描述增加'0xB:PTC过流故障(ErrorLevel=3) '；
+3、PTC接收VCU_0x213帧'主动放电使能标志位'信号；
+（李志超-OA-20250925）；;
+ ";
+
+CM_ BO_ 432 "ECC信号路由";
+CM_ BO_ 531 "ECC从EVBUS接收报文路由到ThemalBUS";
+CM_ SG_ 1316 PTC_ErrCode "PTC故障代码";
+CM_ SG_ 1316 PTC_ErrorLevel "PTC故障等级";
+CM_ SG_ 1316 PTC_CrtPwr "PTC当前功率";
+CM_ SG_ 1316 PTC_CrtT "PTC本体温度";
+CM_ SG_ 1316 PTC_IninSts "PTC初始化状态（自检）";
+CM_ SG_ 1316 PTC_HVPwrSplySts "PTC高压供电状态";
+CM_ SG_ 1316 PTC_ActGear "PTC实际挡位";
+CM_ SG_ 1316 PTC_Mod "PTC当前工作模式";
+CM_ SG_ 1316 PTC_HVIntlkFlt "PTC高压互锁故障_P164D94";
+CM_ SG_ 1317 PTC_PCBT "PTCPCB温度";
+CM_ SG_ 1317 PTC_Crt "PTC当前工作电流";
+CM_ SG_ 1317 PTC_CrtSts "PTC当前工作状态";
+CM_ SG_ 1317 PTC_CrtVolt "PTC当前工作电压";
+CM_ SG_ 1694 PTC_SwVersS "PTC次软件版本号";
+CM_ SG_ 1694 PTC_PartVers "PTC零部件总成号";
+CM_ SG_ 1694 PTC_HwVers "PTC硬件版本号";
+CM_ SG_ 1694 PTC_SwVersM "PTC主软件版本号";
+CM_ SG_ 432 VehSpdVld "Vehicle speed valid. Validty of the vehicle speed.车速信号有效位.";
+CM_ SG_ 432 VehSpd "Vehicle speed. 不考虑车轮方向，采用两驱动轮算术平均值计算，在车轮腾空、打滑等工况，车速不准确，接收节点需评估后接收。";
+CM_ SG_ 531 VCU_ActvDchaEnaFlg "主动放电使能标志位";
+CM_ SG_ 1248 ECC_TarPwr_PTC "PTC目标功率";
+CM_ SG_ 1248 ECC_EnaCmd_PTC "PTC使能指令";
+CM_ SG_ 1248 ECC_TarGear_PTC "PTC目标挡位";
+CM_ SG_ 909 ECC_PTCFBDut "PTC占空比";
+CM_ SG_ 1361 TBOX_CrtTi_Day "当前时间_日";
+CM_ SG_ 1361 TBOX_CrtTi_Hr "当前时间_小时";
+CM_ SG_ 1361 TBOX_CrtTi_Mins "当前时间_分钟";
+CM_ SG_ 1361 TBOX_CrtTi_Yr "当前时间_年";
+CM_ SG_ 1361 TBOX_CrtTi_Mth "当前时间_月";
+CM_ SG_ 1361 TBOX_CrtTi_Sec "当前时间_秒";
+CM_ SG_ 855 VCU_RefrshModRestrntFctCmd "刷写模式抑制功能启动指令";
+CM_ SG_ 855 VCU_InhibitFunCmdVld "抑制指令有效标志";
+
+
+BA_DEF_ BO_  "NmMessage" ENUM "No","Yes";
+BA_DEF_ BO_  "DiagState" ENUM  "No","Yes";
+BA_DEF_ BO_  "DiagRequest" ENUM  "No","Yes";
+BA_DEF_ BO_  "DiagResponse" ENUM  "No","Yes";
+BA_DEF_ BO_  "GenMsgSendType" ENUM  "cyclic","NoMsgSendType","IfActive","Event","CA","CE";
+BA_DEF_ BO_  "GenMsgCycleTime" INT 0 0;
+BA_DEF_ SG_  "GenSigSendType" ENUM  "cyclic","OnChange","OnWrite","IfActive","OnChangeWithRepetition","OnWriteWithRepetition","IfActiveWithRepetition","NoSigSendType","OnChangeAndIfActive", "OnChangeAndIfActiveWithRepetition","CA","CE","Event";
+BA_DEF_ SG_  "GenSigStartValue" INT 0 0;
+BA_DEF_ SG_  "GenSigInactiveValue" INT 0 0;
+BA_DEF_ BO_  "GenMsgCycleTimeFast" INT 0 0;
+BA_DEF_ BO_  "GenMsgNrOfRepetition" INT 0 0;
+BA_DEF_ BO_  "GenMsgDelayTime" INT 0 0;
+BA_DEF_  "DBName" STRING ;
+BA_DEF_  "BusBaudate" INT 0 10000;
+BA_DEF_ BU_  "NodeLayerModules" STRING ;
+BA_DEF_ SG_  "GenSigTimeoutValue" INT 0 1000000000;
+BA_DEF_ BO_  "GenMsgCycleTimeActive" INT 0 0;
+BA_DEF_ BU_  "ILUsed" ENUM  "No","Yes";
+BA_DEF_ BU_  "DiagStationAddress" HEX 0 255;
+BA_DEF_ BU_  "NmNode" ENUM  "Not","Yes";
+BA_DEF_ BU_  "NmStationAddress" HEX 0 65535;
+BA_DEF_ BU_  "NmCAN" INT 0 2;
+BA_DEF_  "Manufacturer" STRING ;
+BA_DEF_  "NmType" STRING ;
+BA_DEF_  "NmBaseAddress" HEX 0 2047;
+BA_DEF_  "NmMessageCount" INT 0 255;
+BA_DEF_ BO_  "_Cdb_Sc_CTm_FAW_v3_0" INT 0 0;
+BA_DEF_ BO_  "_Cdb_Sc_CTm_FAW_v2_3" INT 0 0;
+BA_DEF_ BO_  "_Cdb_Sc_CTm_FAW_v3_1" INT 0 0;
+BA_DEF_ BO_  "_Cdb_Sc_CTm_FAW_v2_2" INT 0 0;
+BA_DEF_ BO_  "_Cdb_Sc_CTm_FAW_v2_1" INT 0 0;
+BA_DEF_ BO_  "GenMsgILSupport" ENUM  "No","Yes";
+BA_DEF_ BO_  "GenMsgStartDelayTime" INT 0 65535;
+BA_DEF_  "BusType" STRING ;
+BA_DEF_ SG_ "sigDespEng" STRING;
+BA_DEF_ SG_ "sigSecLevel" STRING;
+BA_DEF_ SG_ "sigConfig" STRING;
+BA_DEF_ SG_ "sigExplanation" STRING;
+
+
+BA_DEF_DEF_  "NmMessage" "No";
+BA_DEF_DEF_  "DiagState" "No";
+BA_DEF_DEF_  "DiagRequest" "No";
+BA_DEF_DEF_  "DiagResponse" "No";
+BA_DEF_DEF_  "GenMsgSendType" "cyclic";
+BA_DEF_DEF_  "GenMsgCycleTime" 0;
+BA_DEF_DEF_  "GenSigSendType" "cyclic";
+BA_DEF_DEF_  "GenSigStartValue" 0;
+BA_DEF_DEF_  "GenSigInactiveValue" 0;
+BA_DEF_DEF_  "GenMsgCycleTimeFast" 0;
+BA_DEF_DEF_  "GenMsgNrOfRepetition" 0;
+BA_DEF_DEF_  "GenMsgDelayTime" 0;
+BA_DEF_DEF_  "DBName" "";
+BA_DEF_DEF_  "BusBaudate" 500;
+BA_DEF_DEF_  "NodeLayerModules" "CANoeILNLVector.dll";
+BA_DEF_DEF_  "GenSigTimeoutValue" 0;
+BA_DEF_DEF_  "GenMsgCycleTimeActive" 0;
+BA_DEF_DEF_  "ILUsed" "No";
+BA_DEF_DEF_  "DiagStationAddress" 0;
+BA_DEF_DEF_  "NmNode" "Not";
+BA_DEF_DEF_  "NmStationAddress" 0;
+BA_DEF_DEF_  "NmCAN" 0;
+BA_DEF_DEF_  "Manufacturer" "";
+BA_DEF_DEF_  "NmType" "";
+BA_DEF_DEF_  "NmBaseAddress" 1024;
+BA_DEF_DEF_  "NmMessageCount" 128;
+BA_DEF_DEF_  "_Cdb_Sc_CTm_FAW_v3_0" 0;
+BA_DEF_DEF_  "_Cdb_Sc_CTm_FAW_v2_3" 0;
+BA_DEF_DEF_  "_Cdb_Sc_CTm_FAW_v3_1" 0;
+BA_DEF_DEF_  "_Cdb_Sc_CTm_FAW_v2_2" 0;
+BA_DEF_DEF_  "_Cdb_Sc_CTm_FAW_v2_1" 0;
+BA_DEF_DEF_  "GenMsgILSupport" "No";
+BA_DEF_DEF_  "GenMsgStartDelayTime" 0;
+BA_DEF_DEF_  "BusType" "CAN";
+BA_DEF_DEF_ "sigDespEng" "" ;
+BA_DEF_DEF_ "sigSecLevel" "QM" ;
+BA_DEF_DEF_ "sigConfig" "" ;
+BA_DEF_DEF_ "sigExplanation" "" ;
+BA_ "DBName" "BAIC_3.0平台_ECC-ThemalBUS_Matrix_CAN_V1.10_20250927";
+BA_ "BusBaudate" 500;
+BA_ "GenMsgCycleTime" BO_ 432 20;
+BA_ "sigDespEng"  SG_ 432 VehSpdVld "";
+BA_ "sigSecLevel"  SG_ 432 VehSpdVld "";
+BA_ "sigConfig"  SG_ 432 VehSpdVld "";
+BA_ "sigExplanation"  SG_ 432 VehSpdVld "ECC信号路由EVBUS上PBM_0x185：VehSpdVld";
+BA_ "sigDespEng"  SG_ 432 VehSpd "";
+BA_ "sigSecLevel"  SG_ 432 VehSpd "";
+BA_ "sigConfig"  SG_ 432 VehSpd "";
+BA_ "sigExplanation"  SG_ 432 VehSpd "ECC信号路由EVBUS上PBM_0x185：VehSpd";
+BA_ "GenMsgCycleTime" BO_ 531 10;
+BA_ "sigDespEng"  SG_ 531 VCU_ActvDchaEnaFlg "";
+BA_ "sigSecLevel"  SG_ 531 VCU_ActvDchaEnaFlg "";
+BA_ "sigConfig"  SG_ 531 VCU_ActvDchaEnaFlg "";
+BA_ "sigExplanation"  SG_ 531 VCU_ActvDchaEnaFlg "";
+BA_ "GenMsgCycleTime" BO_ 1248 100;
+BA_ "sigDespEng"  SG_ 1248 ECC_TarPwr_PTC "";
+BA_ "sigSecLevel"  SG_ 1248 ECC_TarPwr_PTC "";
+BA_ "sigConfig"  SG_ 1248 ECC_TarPwr_PTC "";
+BA_ "sigExplanation"  SG_ 1248 ECC_TarPwr_PTC "";
+BA_ "sigDespEng"  SG_ 1248 ECC_EnaCmd_PTC "";
+BA_ "sigSecLevel"  SG_ 1248 ECC_EnaCmd_PTC "";
+BA_ "sigConfig"  SG_ 1248 ECC_EnaCmd_PTC "";
+BA_ "sigExplanation"  SG_ 1248 ECC_EnaCmd_PTC "";
+BA_ "sigDespEng"  SG_ 1248 ECC_TarGear_PTC "";
+BA_ "sigSecLevel"  SG_ 1248 ECC_TarGear_PTC "";
+BA_ "sigConfig"  SG_ 1248 ECC_TarGear_PTC "";
+BA_ "sigExplanation"  SG_ 1248 ECC_TarGear_PTC "";
+BA_ "GenMsgCycleTime" BO_ 909 100;
+BA_ "sigDespEng"  SG_ 909 ECC_PTCFBDut "";
+BA_ "sigSecLevel"  SG_ 909 ECC_PTCFBDut "";
+BA_ "sigConfig"  SG_ 909 ECC_PTCFBDut "";
+BA_ "sigExplanation"  SG_ 909 ECC_PTCFBDut "";
+BA_ "GenMsgCycleTime" BO_ 1316 100;
+BA_ "sigDespEng"  SG_ 1316 PTC_ErrCode "";
+BA_ "sigSecLevel"  SG_ 1316 PTC_ErrCode "";
+BA_ "sigConfig"  SG_ 1316 PTC_ErrCode "";
+BA_ "sigExplanation"  SG_ 1316 PTC_ErrCode "";
+BA_ "sigDespEng"  SG_ 1316 PTC_ErrorLevel "";
+BA_ "sigSecLevel"  SG_ 1316 PTC_ErrorLevel "";
+BA_ "sigConfig"  SG_ 1316 PTC_ErrorLevel "";
+BA_ "sigExplanation"  SG_ 1316 PTC_ErrorLevel "";
+BA_ "sigDespEng"  SG_ 1316 PTC_CrtPwr "";
+BA_ "sigSecLevel"  SG_ 1316 PTC_CrtPwr "";
+BA_ "sigConfig"  SG_ 1316 PTC_CrtPwr "";
+BA_ "sigExplanation"  SG_ 1316 PTC_CrtPwr "";
+BA_ "GenSigStartValue" SG_ 1316 PTC_CrtT 48;
+BA_ "sigDespEng"  SG_ 1316 PTC_CrtT "";
+BA_ "sigSecLevel"  SG_ 1316 PTC_CrtT "";
+BA_ "sigConfig"  SG_ 1316 PTC_CrtT "";
+BA_ "sigExplanation"  SG_ 1316 PTC_CrtT "";
+BA_ "sigDespEng"  SG_ 1316 PTC_IninSts "";
+BA_ "sigSecLevel"  SG_ 1316 PTC_IninSts "";
+BA_ "sigConfig"  SG_ 1316 PTC_IninSts "";
+BA_ "sigExplanation"  SG_ 1316 PTC_IninSts "";
+BA_ "sigDespEng"  SG_ 1316 PTC_HVPwrSplySts "";
+BA_ "sigSecLevel"  SG_ 1316 PTC_HVPwrSplySts "";
+BA_ "sigConfig"  SG_ 1316 PTC_HVPwrSplySts "";
+BA_ "sigExplanation"  SG_ 1316 PTC_HVPwrSplySts "";
+BA_ "sigDespEng"  SG_ 1316 PTC_ActGear "";
+BA_ "sigSecLevel"  SG_ 1316 PTC_ActGear "";
+BA_ "sigConfig"  SG_ 1316 PTC_ActGear "";
+BA_ "sigExplanation"  SG_ 1316 PTC_ActGear "";
+BA_ "sigDespEng"  SG_ 1316 PTC_Mod "";
+BA_ "sigSecLevel"  SG_ 1316 PTC_Mod "";
+BA_ "sigConfig"  SG_ 1316 PTC_Mod "";
+BA_ "sigExplanation"  SG_ 1316 PTC_Mod "";
+BA_ "sigDespEng"  SG_ 1316 PTC_HVIntlkFlt "";
+BA_ "sigSecLevel"  SG_ 1316 PTC_HVIntlkFlt "";
+BA_ "sigConfig"  SG_ 1316 PTC_HVIntlkFlt "";
+BA_ "sigExplanation"  SG_ 1316 PTC_HVIntlkFlt "";
+BA_ "GenMsgCycleTime" BO_ 1317 100;
+BA_ "GenSigStartValue" SG_ 1317 PTC_PCBT 48;
+BA_ "sigDespEng"  SG_ 1317 PTC_PCBT "";
+BA_ "sigSecLevel"  SG_ 1317 PTC_PCBT "";
+BA_ "sigConfig"  SG_ 1317 PTC_PCBT "";
+BA_ "sigExplanation"  SG_ 1317 PTC_PCBT "";
+BA_ "sigDespEng"  SG_ 1317 PTC_Crt "";
+BA_ "sigSecLevel"  SG_ 1317 PTC_Crt "";
+BA_ "sigConfig"  SG_ 1317 PTC_Crt "";
+BA_ "sigExplanation"  SG_ 1317 PTC_Crt "";
+BA_ "sigDespEng"  SG_ 1317 PTC_CrtSts "";
+BA_ "sigSecLevel"  SG_ 1317 PTC_CrtSts "";
+BA_ "sigConfig"  SG_ 1317 PTC_CrtSts "";
+BA_ "sigExplanation"  SG_ 1317 PTC_CrtSts "";
+BA_ "sigDespEng"  SG_ 1317 PTC_CrtVolt "";
+BA_ "sigSecLevel"  SG_ 1317 PTC_CrtVolt "";
+BA_ "sigConfig"  SG_ 1317 PTC_CrtVolt "";
+BA_ "sigExplanation"  SG_ 1317 PTC_CrtVolt "";
+BA_ "GenMsgCycleTime" BO_ 1361 100;
+BA_ "sigDespEng"  SG_ 1361 TBOX_CrtTi_Day "";
+BA_ "sigSecLevel"  SG_ 1361 TBOX_CrtTi_Day "";
+BA_ "sigConfig"  SG_ 1361 TBOX_CrtTi_Day "";
+BA_ "sigExplanation"  SG_ 1361 TBOX_CrtTi_Day "";
+BA_ "sigDespEng"  SG_ 1361 TBOX_CrtTi_Hr "";
+BA_ "sigSecLevel"  SG_ 1361 TBOX_CrtTi_Hr "";
+BA_ "sigConfig"  SG_ 1361 TBOX_CrtTi_Hr "";
+BA_ "sigExplanation"  SG_ 1361 TBOX_CrtTi_Hr "";
+BA_ "sigDespEng"  SG_ 1361 TBOX_CrtTi_Mins "";
+BA_ "sigSecLevel"  SG_ 1361 TBOX_CrtTi_Mins "";
+BA_ "sigConfig"  SG_ 1361 TBOX_CrtTi_Mins "";
+BA_ "sigExplanation"  SG_ 1361 TBOX_CrtTi_Mins "";
+BA_ "sigDespEng"  SG_ 1361 TBOX_CrtTi_Yr "";
+BA_ "sigSecLevel"  SG_ 1361 TBOX_CrtTi_Yr "";
+BA_ "sigConfig"  SG_ 1361 TBOX_CrtTi_Yr "";
+BA_ "sigExplanation"  SG_ 1361 TBOX_CrtTi_Yr "";
+BA_ "sigDespEng"  SG_ 1361 TBOX_CrtTi_Mth "";
+BA_ "sigSecLevel"  SG_ 1361 TBOX_CrtTi_Mth "";
+BA_ "sigConfig"  SG_ 1361 TBOX_CrtTi_Mth "";
+BA_ "sigExplanation"  SG_ 1361 TBOX_CrtTi_Mth "";
+BA_ "sigDespEng"  SG_ 1361 TBOX_CrtTi_Sec "";
+BA_ "sigSecLevel"  SG_ 1361 TBOX_CrtTi_Sec "";
+BA_ "sigConfig"  SG_ 1361 TBOX_CrtTi_Sec "";
+BA_ "sigExplanation"  SG_ 1361 TBOX_CrtTi_Sec "";
+BA_ "GenMsgCycleTime" BO_ 1694 1000;
+BA_ "sigDespEng"  SG_ 1694 PTC_SwVersS "";
+BA_ "sigSecLevel"  SG_ 1694 PTC_SwVersS "";
+BA_ "sigConfig"  SG_ 1694 PTC_SwVersS "";
+BA_ "sigExplanation"  SG_ 1694 PTC_SwVersS "";
+BA_ "GenSigStartValue" SG_ 1694 PTC_PartVers 1;
+BA_ "sigDespEng"  SG_ 1694 PTC_PartVers "";
+BA_ "sigSecLevel"  SG_ 1694 PTC_PartVers "";
+BA_ "sigConfig"  SG_ 1694 PTC_PartVers "";
+BA_ "sigExplanation"  SG_ 1694 PTC_PartVers "";
+BA_ "sigDespEng"  SG_ 1694 PTC_HwVers "";
+BA_ "sigSecLevel"  SG_ 1694 PTC_HwVers "";
+BA_ "sigConfig"  SG_ 1694 PTC_HwVers "";
+BA_ "sigExplanation"  SG_ 1694 PTC_HwVers "";
+BA_ "sigDespEng"  SG_ 1694 PTC_SwVersM "";
+BA_ "sigSecLevel"  SG_ 1694 PTC_SwVersM "";
+BA_ "sigConfig"  SG_ 1694 PTC_SwVersM "";
+BA_ "sigExplanation"  SG_ 1694 PTC_SwVersM "";
+BA_ "GenMsgCycleTime" BO_ 855 100;
+BA_ "sigDespEng"  SG_ 855 VCU_RefrshModRestrntFctCmd "";
+BA_ "sigSecLevel"  SG_ 855 VCU_RefrshModRestrntFctCmd "";
+BA_ "sigConfig"  SG_ 855 VCU_RefrshModRestrntFctCmd "";
+BA_ "sigExplanation"  SG_ 855 VCU_RefrshModRestrntFctCmd "";
+BA_ "sigDespEng"  SG_ 855 VCU_InhibitFunCmdVld "";
+BA_ "sigSecLevel"  SG_ 855 VCU_InhibitFunCmdVld "";
+BA_ "sigConfig"  SG_ 855 VCU_InhibitFunCmdVld "";
+BA_ "sigExplanation"  SG_ 855 VCU_InhibitFunCmdVld "";
+BA_ "DiagState" BO_ 1806 1;
+BA_ "DiagResponse" BO_ 1806 1;
+BA_ "GenMsgSendType" BO_ 1806 1;
+BA_ "DiagState" BO_ 1934 1;
+BA_ "DiagResponse" BO_ 1934 1;
+BA_ "GenMsgSendType" BO_ 1934 1;
+BA_ "DiagState" BO_ 2015 1;
+BA_ "DiagResponse" BO_ 2015 1;
+BA_ "GenMsgSendType" BO_ 2015 1;
+VAL_ 1316 PTC_ErrCode 11 "PTC过流故障(ErrorLevel=3)" 10 "PTC CAN通讯故障(ErrorLevel=1)" 8 "PTC温度传感器故障(ErrorLevel=2)   0x9:IGBT温度传感器故障(ErrorLevel=2)" 7 "IGBT过温(ErrorLevel=1)" 6 "PTC过温(ErrorLevel=1)" 4 "芯体短路(ErrorLevel=3)        0x5:IGBT开路(ErrorLevel=2)" 3 "IGBT短路(ErrorLevel=3)" 1 "过压(ErrorLevel=2)                      0x2:欠压(ErrorLevel=1)" 0 "无故障" ;
+VAL_ 1316 PTC_ErrorLevel 3 "严重故障" 2 "一般故障" 1 "轻微故障" 0 "无故障" ;
+VAL_ 1316 PTC_CrtT 255 "Invalid" ;
+VAL_ 1316 PTC_IninSts 1 "初始化已完成" 0 "初始化未完成" ;
+VAL_ 1316 PTC_HVPwrSplySts 1 "已供电" 0 "未供电" ;
+VAL_ 1316 PTC_ActGear 15 "Reserved" 14 "Reserved" 13 "Reserved" 12 "Reserved" 11 "Reserved" 10 "Reserved" 9 "Reserved" 8 "Reserved" 7 "Reserved" 6 "六挡" 5 "五挡" 4 "四挡" 3 "三挡" 2 "二挡" 1 "一挡" 0 "0挡" ;
+VAL_ 1316 PTC_Mod 1 "功率工作模式" 0 "挡位工作模式" ;
+VAL_ 1316 PTC_HVIntlkFlt 1 "故障" 0 "正常" ;
+VAL_ 1317 PTC_PCBT 255 "Invalid" ;
+VAL_ 1317 PTC_Crt 65535 "Invalid" ;
+VAL_ 1317 PTC_CrtSts 3 "挡位工作状态" 2 "故障状态" 1 "功率工作状态" 0 "待机状态" ;
+VAL_ 1317 PTC_CrtVolt 65535 "Invalid" ;
+VAL_ 432 VehSpdVld 3 "Reserved" 2 "Invalid" 1 "Valid" 0 "Initializing" ;
+VAL_ 432 VehSpd 65535 "Invalid" ;
+VAL_ 531 VCU_ActvDchaEnaFlg 3 "Invalid" 2 "使能" 1 "不使能" 0 "初始值" ;
+VAL_ 1248 ECC_TarPwr_PTC 65535 "Invalid" ;
+VAL_ 1248 ECC_EnaCmd_PTC 3 "挡位工作模式" 2 "高压放电" 1 "功率工作模式" 0 "待机" ;
+VAL_ 1248 ECC_TarGear_PTC 15 "Reserved" 14 "Reserved" 13 "Reserved" 12 "Reserved" 11 "Reserved" 10 "Reserved" 9 "Reserved" 8 "Reserved" 7 "Reserved" 6 "六挡" 5 "五挡" 4 "四挡" 3 "三挡" 2 "二挡" 1 "一挡" 0 "0挡" ;
+VAL_ 1361 TBOX_CrtTi_Day 30 "Day31" 0 "Day1" ;
+VAL_ 1361 TBOX_CrtTi_Hr 23 "Hour 23" 0 "Hour 0" ;
+VAL_ 1361 TBOX_CrtTi_Mins 59 "Mintue 59" 0 "Mintue 0" ;
+VAL_ 1361 TBOX_CrtTi_Yr 255 "Year2270" 0 "Year 2015" ;
+VAL_ 1361 TBOX_CrtTi_Mth 11 "December" 0 "January" ;
+VAL_ 1361 TBOX_CrtTi_Sec 59 "Second 59" 0 "Second 0" ;
+VAL_ 855 VCU_RefrshModRestrntFctCmd 3 "安全抑制" 2 "自动声光动抑制" 1 "自动声光动抑制+安全抑制" 0 "初始值" ;
+VAL_ 855 VCU_InhibitFunCmdVld 1 "有效" 0 "无效" ;

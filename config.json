@@ -1,0 +1,181 @@
+{
+    "stages": [
+        {
+            "power": 1000,
+            "duration": 60
+        },
+        {
+            "power": 2000,
+            "duration": 60
+        },
+        {
+            "power": 0,
+            "duration": 10
+        }
+    ],
+    "scanner": {
+        "ip": "192.168.1.100",
+        "port": 5000,
+        "mode": "client"
+    },
+    "stations": [
+        {
+            "id": 1,
+            "name": "Station 1",
+            "device_sn": "",
+            "can_channel": 0,
+            "enabled": true
+        },
+        {
+            "id": 2,
+            "name": "Station 2",
+            "device_sn": "",
+            "can_channel": 0,
+            "enabled": true
+        },
+        {
+            "id": 3,
+            "name": "Station 3",
+            "device_sn": "",
+            "can_channel": 0,
+            "enabled": true
+        },
+        {
+            "id": 4,
+            "name": "Station 4",
+            "device_sn": "",
+            "can_channel": 0,
+            "enabled": true
+        },
+        {
+            "id": 5,
+            "name": "Station 5",
+            "device_sn": "",
+            "can_channel": 0,
+            "enabled": true
+        },
+        {
+            "id": 6,
+            "name": "Station 6",
+            "device_sn": "",
+            "can_channel": 0,
+            "enabled": true
+        },
+        {
+            "id": 7,
+            "name": "Station 7",
+            "device_sn": "",
+            "can_channel": 0,
+            "enabled": true
+        },
+        {
+            "id": 8,
+            "name": "Station 8",
+            "device_sn": "",
+            "can_channel": 0,
+            "enabled": true
+        },
+        {
+            "id": 9,
+            "name": "Station 9",
+            "device_sn": "",
+            "can_channel": 0,
+            "enabled": true
+        },
+        {
+            "id": 10,
+            "name": "Station 10",
+            "device_sn": "",
+            "can_channel": 0,
+            "enabled": true
+        }
+    ],
+    "hardware_settings": {
+        "工位1": {
+            "can_sn": "设备3: 序列号=30415455003330355300035A (功能: USB2CANFD,USB2LIN,USB2PWM,CAN2LIN)",
+            "can_channel": "0",
+            "scanner_ip": "192.168.10.164:8888"
+        },
+        "工位2": {
+            "can_sn": "设备3: 序列号=30415455003330355300035A (功能: USB2CANFD,USB2LIN,USB2PWM,CAN2LIN)",
+            "can_channel": "1",
+            "scanner_ip": "192.168.10.165:8888"
+        },
+        "工位3": {
+            "can_sn": "设备1: 序列号=30415455003330355300023E (功能: USB2CANFD,USB2LIN,USB2PWM,CAN2LIN)",
+            "can_channel": "1",
+            "scanner_ip": "192.168.10.166:8888"
+        },
+        "工位4": {
+            "can_sn": "设备5: 序列号=30415455003330355300021B (功能: USB2CANFD,USB2LIN,USB2PWM,CAN2LIN)",
+            "can_channel": "1",
+            "scanner_ip": "192.168.10.167:8888"
+        },
+        "工位5": {
+            "can_sn": "设备1: 序列号=30415455003330355300023E (功能: USB2CANFD,USB2LIN,USB2PWM,CAN2LIN)",
+            "can_channel": "0",
+            "scanner_ip": "192.168.10.168:8888"
+        },
+        "工位6": {
+            "can_sn": "设备4: 序列号=304154550033303553000239 (功能: USB2CANFD,USB2LIN,USB2PWM,CAN2LIN)",
+            "can_channel": "0",
+            "scanner_ip": "192.168.10.169:8888"
+        },
+        "工位7": {
+            "can_sn": "设备0: 序列号=30415455003330355300023B (功能: USB2CANFD,USB2LIN,USB2PWM,CAN2LIN)",
+            "can_channel": "0",
+            "scanner_ip": "192.168.10.170:8888"
+        },
+        "工位8": {
+            "can_sn": "设备4: 序列号=304154550033303553000239 (功能: USB2CANFD,USB2LIN,USB2PWM,CAN2LIN)",
+            "can_channel": "1",
+            "scanner_ip": "192.168.10.171:8888"
+        },
+        "工位9": {
+            "can_sn": "设备2: 序列号=30415455003330355300023C (功能: USB2CANFD,USB2LIN,USB2PWM,CAN2LIN)",
+            "can_channel": "0",
+            "scanner_ip": "192.168.10.172:8888"
+        },
+        "工位10": {
+            "can_sn": "设备2: 序列号=30415455003330355300023C (功能: USB2CANFD,USB2LIN,USB2PWM,CAN2LIN)",
+            "can_channel": "1",
+            "scanner_ip": "192.168.10.173:8888"
+        }
+    },
+    "wind_speed_settings": {
+        "plc1_wind_speed": "30",
+        "plc2_wind_speed": "30"
+    },
+    "plc_settings": {
+        "plc1_ip": "192.168.10.180",
+        "plc2_ip": "192.168.10.181"
+    },
+    "products": [
+        {
+            "name": "A060",
+            "times": {
+                "100%功率参数设置": 2500,
+                "0%功率参数设置_1": 0,
+                "80%功率参数设置": 2000,
+                "0%功率参数设置_2": 0,
+                "60%功率参数设置": 1500,
+                "0%功率参数设置_3": 0,
+                "40%功率参数设置": 1000,
+                "0%功率参数设置_4": 10
+            },
+            "powers": {
+                "100%功率时间设置": 890.0,
+                "0%功率时间设置_1": 10.0,
+                "80%功率时间设置": 890.0,
+                "0%功率时间设置_2": 10.0,
+                "60%功率时间设置": 890.0,
+                "0%功率时间设置_3": 10.0,
+                "40%功率时间设置": 890.0,
+                "0%功率时间设置_4": 10.0
+            },
+            "part_number": ""
+        }
+    ],
+    "scan_start": true,
+    "print_label_qr": false
+}

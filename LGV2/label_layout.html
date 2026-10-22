@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Label Layout</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* 标签容器 */
+        .label-container {
+            width: 400px; /* 模拟标签宽度 40mm -> 400px (假设比例) */
+            height: 200px; /* 模拟标签高度 20mm -> 200px */
+            background-color: white;
+            border: 1px solid #333;
+            display: flex; /* 关键：使用Flexbox布局 */
+            box-sizing: border-box;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* 左侧文字区域：占据 60% (3/5) */
+        .text-section {
+            flex: 0 0 60%; /* 不放大，不缩小，基准宽度60% */
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* 垂直居中 */
+            box-sizing: border-box;
+            overflow: hidden; /* 防止内容溢出 */
+        }
+
+        .text-row {
+            margin-bottom: 4px;
+            font-size: 12px;
+            line-height: 1.4;
+            white-space: nowrap; /* 防止文字换行 */
+            overflow: hidden;
+            text-overflow: ellipsis; /* 超出显示省略号 */
+            color: #000;
+        }
+
+        .text-row.bold {
+            font-weight: bold;
+        }
+
+        /* 右侧二维码区域：占据 40% (2/5) */
+        .qr-section {
+            flex: 0 0 40%; /* 不放大，不缩小，基准宽度40% */
+            display: flex;
+            justify-content: center; /* 水平居中 */
+            align-items: center; /* 垂直居中 */
+            padding: 10px;
+            box-sizing: border-box;
+            /* background-color: #f9f9f9;  可选：背景色区分 */
+        }
+
+        .qr-code {
+            width: 100px;
+            height: 100px;
+            display: block;
+            object-fit: contain; /* 保持纵横比 */
+        }
+
+        /* 响应式设计：在小屏幕上调整 */
+        @media (max-width: 450px) {
+            .label-container {
+                width: 100%;
+                max-width: 350px;
+                height: auto; /* 高度自适应 */
+                aspect-ratio: 2/1; /* 保持 2:1 比例 */
+            }
+            
+            .text-row {
+                font-size: 10px; /* 缩小字体 */
+            }
+            
+            .qr-code {
+                width: 80%; /* 二维码相对缩小 */
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="label-container">
+        <!-- 文字部分 (60%) -->
+        <div class="text-section">
+            <div class="text-row">Product name: PTC assembly</div>
+            <div class="text-row">Specifications: 1000W/13VDC</div>
+            <div class="text-row bold">Part number: H081683084</div>
+            <div class="text-row">Version: HW0.0.1 SW00.00.01</div>
+            <div class="text-row bold">Batch number: 062602010001</div>
+            <div class="text-row">P/NO: AA061000</div>
+        </div>
+
+        <!-- 二维码部分 (40%) -->
+        <div class="qr-section">
+            <!-- 使用占位符图片或API生成二维码 -->
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=H081683084062602010001" alt="QR Code" class="qr-code">
+        </div>
+    </div>
+
+</body>
+</html>

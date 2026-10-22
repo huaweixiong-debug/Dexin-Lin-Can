@@ -1,0 +1,32 @@
+# LGV2 Test System Requirements
+# Python 3.13.11
+
+# GUI Framework
+tkinter  # Built-in with Python
+
+# PLC Communication
+python-snap7==2.0.2
+
+# Database
+sqlite3  # Built-in with Python
+
+# Logging
+# logging - Built-in with Python
+
+# Network Communication
+# socket - Built-in with Python
+
+# Threading
+# threading - Built-in with Python
+
+# JSON Processing
+# json - Built-in with Python
+
+# Date/Time
+# datetime - Built-in with Python
+
+# For building executable
+pyinstaller==6.18.0
+
+# Optional: For better packaging
+# setuptools>=42.0.0
