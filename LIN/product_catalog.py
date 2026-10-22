@@ -37,6 +37,23 @@ _PRODUCTS: Dict[str, ProductDefinition] = {
         status_pid=0x37,
         aux_status_pid=0x39,
     ),
+    "A063": ProductDefinition(
+        code="A063",
+        display_name="A063 前风暖 LIN",
+        runtime_supported=True,
+        protocol_summary="Front dual-zone APTC using 0x07 command, 0x08 status, and 0x0A auxiliary frames.",
+        command_pid=0x07,
+        status_pid=0x08,
+        aux_status_pid=0x0A,
+    ),
+    "A064": ProductDefinition(
+        code="A064",
+        display_name="A064 后风暖 LIN",
+        runtime_supported=True,
+        protocol_summary="Rear single-zone APTC using 0x15 command and 0x16 status frames.",
+        command_pid=0x15,
+        status_pid=0x16,
+    ),
 }
 
 

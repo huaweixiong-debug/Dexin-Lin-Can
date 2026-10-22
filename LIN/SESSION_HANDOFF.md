@@ -1333,3 +1333,31 @@ cd R:\老化LIN通讯
 python -m py_compile lin_device_manager.py lin_service.py main.py settings_ui.py probe_a045_lin.py
 python -m unittest test_a045_protocol.py test_main_config.py
 ```
+
+## 2026-10-22 新增 A063 / A064 产品（同一界面四产品）
+
+依据：`015 A063 A064 老化机程序/A063_A064_老化信号定义表.xlsx`（含保护策略、通讯矩阵汇总）。
+
+### 本轮修改
+
+- 新增 `a063_protocol.py`（前风暖，双温区）：发 `0x07`（Request + PowerSet1/2，16 位小端），收 `0x08` + `0x0A`。
+  - 序列的 0~100% 同时下发到左右两区；POWER_1/POWER_2 → 看板左/右功率，Temperature1/2 → 左/右温度，PCBA 温度 → PCB 温度。
+  - 母线电压 raw 0/1（未上高压 / <240 V）按 0 V 处理；ErrorMode0/1/2、ResponseError、LinComError、HV_interlock=1（未锁）、ErrorState 合成 `fault_code`，日志列出故障名。
+- 新增 `a064_protocol.py`（后风暖，单温区）：发 `0x15`（HeatingReq 7 bit %，OnReq 0x2=on / 0x1=off），收 `0x16`。
+  - 看板功率 = U×I 实测功率（左右相同）；芯体温度 → 左/右温度；IGBT 温度占 PCB 温度位（A064 不上报 PCBA），看板/日志卡/查询表该列标题自动改为“IGBT温度”。
+  - 14 个故障位合成 `fault_code`。
+- `product_catalog.py` / `runtime_protocols.py` 注册 A063、A064；设置页“产品型号”下拉自动出现四个产品。
+- `product_presenter.py`：A063/A064 状态行与步骤汇总沿用 A045 格式，额外附 `current= igbt_temp= heat_pwr= limited= sw= hw= rx0A=` 字段。
+- `main.py`：故障停机由 A050 专用改为按产品配置 `FAULT_STOP_CONFIRM_FRAMES`：A050 = 1 帧（原行为不变），A063/A064 = 连续 3 帧（约 300 ms）故障判 NG 并停机下发 0%。
+
+### 验证结果
+
+- 单测 98 个全部通过（新增 `test_a063_protocol.py`、`test_a064_protocol.py`、`test_a063_a064_runtime.py`、`test_settings_ui_a063_a064.py`，用定义表“报文示例”帧做样本）。
+- Tk 界面启动、切换 A063/A064/A045 正常（无 USB2XXX / PLC 的开发机上验证）。
+- **尚未上实机验证。**
+
+### 待确认 / 下一步建议
+
+1. A064 定义表“报文示例”中 0x16 的 Data[4]=0x02 按矩阵位定义是 FaultState=1、Status=0，与备注“Status=1；无故障”矛盾；程序按矩阵（bit32=Status，bit33=FaultState）实现，需用样件抓一帧确认。
+2. A063 16 位信号（PowerSet、POWER_1/2）按小端实现，首件需确认。
+3. 老化判据中的功率 ±10%、高压 ±5 V、温度余量等数值判定尚未实现（与 A045/A050 一致，目前只按故障位判 NG）。

@@ -8,7 +8,7 @@
   - `CAN/LGV2/`：CAN + LIN 一体化测试主程序。Python 3.13 + tkinter，负责 USB2CAN / USB2LIN 通讯、西门子 S7 PLC 交互、SQLite 数据记录和测试流程控制。
   - `CAN/USB2CAN/`：USB2CAN 设备调试、DBC 解析和通讯测试脚本。
   - `CAN/` 根目录：DBC / Excel 协议文件、`OPCOPC.xml`、`config.json`、启动与测试辅助脚本。
-- `LIN/`：老化 LIN 通讯程序。`main.py` 为控制台测试序列入口，支持 A045 / A050 产品、PLC 和多工位扫码。
+- `LIN/`：老化 LIN 通讯程序。`main.py` 为控制台测试序列入口，支持 A045 / A050 / A063（前风暖）/ A064（后风暖）产品、PLC 和多工位扫码。
 
 ## 运行环境
 

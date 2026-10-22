@@ -73,6 +73,12 @@ DASHBOARD_ROWS = [
     ("result", "测试结果"),
 ]
 
+DEFAULT_PCB_TEMP_LABEL = "PCB温度"
+# A064 does not report PCBA temperature; its board-temperature slot carries IGBT.
+PCB_TEMP_LABELS = {
+    "A064": "IGBT温度",
+}
+
 
 class InProcessRunTask:
     _pid_counter = itertools.count(1001)
@@ -179,6 +185,7 @@ class SettingsApp:
         self.run_right_temp_var = tk.StringVar(value="-")
         self.run_pcb_temp_var = tk.StringVar(value="-")
         self.run_summary_var = tk.StringVar(value="尚无汇总。")
+        self.pcb_temp_label_var = tk.StringVar(value=DEFAULT_PCB_TEMP_LABEL)
 
         self.product_var.trace_add("write", self._refresh_product_presentation)
         self.scanned_device_var.trace_add("write", self._on_scanned_device_var_changed)
@@ -280,9 +287,10 @@ class SettingsApp:
 
         # Data rows
         for row_index, (row_key, row_label) in enumerate(DASHBOARD_ROWS, start=2):
+            label_options = {"textvariable": self.pcb_temp_label_var} if row_key == "pcb_temp" else {"text": row_label}
             tk.Label(
                 grid_frame,
-                text=row_label,
+                **label_options,
                 anchor=tk.W,
                 relief=tk.RIDGE,
                 width=16,
@@ -327,6 +335,10 @@ class SettingsApp:
         self.root.title(f"{display_name} 多工位测试设备")
         if self.notebook is not None and self.run_log_tab is not None:
             self.notebook.tab(self.run_log_tab, text=f"{display_name} 运行日志")
+        pcb_temp_label = PCB_TEMP_LABELS.get(product_code, DEFAULT_PCB_TEMP_LABEL)
+        self.pcb_temp_label_var.set(pcb_temp_label)
+        if self.query_tree is not None:
+            self.query_tree.heading("pcb_temp", text=pcb_temp_label)
 
     def _on_product_selected(self, _event: object | None = None) -> None:
         self._refresh_product_presentation()
@@ -1574,12 +1586,13 @@ class SettingsApp:
             ("高压", self.run_hv_var),
             ("左温度", self.run_left_temp_var),
             ("右温度", self.run_right_temp_var),
-            ("PCB温度", self.run_pcb_temp_var),
+            (self.pcb_temp_label_var, self.run_pcb_temp_var),
         ]
         for index, (label_text, value_var) in enumerate(card_fields):
             row = index // 5
             column = (index % 5) * 2
-            ttk.Label(card_frame, text=label_text).grid(row=row, column=column, sticky=tk.W, padx=(0, 8), pady=4)
+            label_options = {"textvariable": label_text} if isinstance(label_text, tk.StringVar) else {"text": label_text}
+            ttk.Label(card_frame, **label_options).grid(row=row, column=column, sticky=tk.W, padx=(0, 8), pady=4)
             ttk.Label(card_frame, textvariable=value_var).grid(
                 row=row, column=column + 1, sticky=tk.W, padx=(0, 16), pady=4
             )

@@ -22,6 +22,23 @@ from a050_protocol import (
     parse_fault_payload as parse_a050_aux_status_payload,
     parse_measurement_payload as parse_a050_status_payload,
 )
+from a063_protocol import (
+    AUX_STATUS_PID as A063_AUX_STATUS_PID,
+    COMMAND_PID as A063_COMMAND_PID,
+    FRAME_SIZE as A063_FRAME_SIZE,
+    STATUS_PID as A063_STATUS_PID,
+    build_command_payload_from_ratio as build_a063_command_payload,
+    combine_status as combine_a063_status,
+    parse_aux_status_payload as parse_a063_aux_status_payload,
+    parse_status_payload as parse_a063_status_payload,
+)
+from a064_protocol import (
+    COMMAND_PID as A064_COMMAND_PID,
+    FRAME_SIZE as A064_FRAME_SIZE,
+    STATUS_PID as A064_STATUS_PID,
+    build_command_payload as build_a064_command_payload,
+    parse_status_payload as parse_a064_status_payload,
+)
 
 
 class RuntimeProtocolError(Exception):
@@ -60,6 +77,25 @@ _RUNTIME_PROTOCOLS: Dict[str, RuntimeProtocolAdapter] = {
         aux_status_pid=A050_AUX_STATUS_PID,
         parse_aux_status_payload=parse_a050_aux_status_payload,
         combine_status=combine_a050_status,
+    ),
+    "A063": RuntimeProtocolAdapter(
+        product_code="A063",
+        frame_size=A063_FRAME_SIZE,
+        command_pid=A063_COMMAND_PID,
+        status_pid=A063_STATUS_PID,
+        build_command_payload=build_a063_command_payload,
+        parse_status_payload=parse_a063_status_payload,
+        aux_status_pid=A063_AUX_STATUS_PID,
+        parse_aux_status_payload=parse_a063_aux_status_payload,
+        combine_status=combine_a063_status,
+    ),
+    "A064": RuntimeProtocolAdapter(
+        product_code="A064",
+        frame_size=A064_FRAME_SIZE,
+        command_pid=A064_COMMAND_PID,
+        status_pid=A064_STATUS_PID,
+        build_command_payload=build_a064_command_payload,
+        parse_status_payload=parse_a064_status_payload,
     ),
 }
 

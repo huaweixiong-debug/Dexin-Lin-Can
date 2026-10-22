@@ -33,6 +33,15 @@ class ProductFaultError(LinServiceError):
     """Raised when a product reports a fault that requires immediate shutdown."""
 
 
+# Consecutive faulty status frames before the run is stopped as NG.
+# A063/A064 debounce 3 frames (~300 ms) so a one-off ResponseError does not trip.
+FAULT_STOP_CONFIRM_FRAMES = {
+    "A050": 1,
+    "A063": 3,
+    "A064": 3,
+}
+
+
 class SequenceRunner:
     def __init__(
         self,
@@ -59,6 +68,7 @@ class SequenceRunner:
         self.step_summaries = []
         self._consecutive_failures = 0
         self._reinit_threshold = 5
+        self._consecutive_fault_frames = 0
 
     def _check_stop_requested(self) -> None:
         if self._stop_event is not None and self._stop_event.is_set():
@@ -164,11 +174,7 @@ class SequenceRunner:
                 product_code,
             )
             status = adapt_status(raw_status, product_code)
-            if str(product_code).strip().upper() == "A050" and status.error_level:
-                self._print_status(status, command_payload, product_code, True)
-                raise ProductFaultError(
-                    f"A050 fault reported: state={status.run_status_text} code=0x{status.error_code:X}"
-                )
+            self._check_product_fault(status, command_payload, product_code)
         except LinCommunicationError as exc:
             self._consecutive_failures += 1
             if self._consecutive_failures >= self._reinit_threshold:
@@ -203,6 +209,20 @@ class SequenceRunner:
             self.last_status_print_time = self.last_valid_status_time
             self.last_status_signature = current_signature
         return status
+
+    def _check_product_fault(self, status: RuntimeStatus, command_payload: List[int], product_code: str) -> None:
+        code = str(product_code).strip().upper()
+        confirm_frames = FAULT_STOP_CONFIRM_FRAMES.get(code)
+        if confirm_frames is None or not status.error_level:
+            self._consecutive_fault_frames = 0
+            return
+        self._consecutive_fault_frames += 1
+        if self._consecutive_fault_frames < confirm_frames:
+            return
+        self._print_status(status, command_payload, product_code, True)
+        raise ProductFaultError(
+            f"{code} fault reported: state={status.run_status_text} code=0x{status.error_code:X}"
+        )
 
     def _print_status(self, status: RuntimeStatus, command_payload: List[int], product_code: str, has_transition: bool) -> None:
         prefix = "[TRANSITION]" if has_transition else "[STATUS]"
