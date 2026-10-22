@@ -1,0 +1,331 @@
+{
+  "product": "A045",
+  "active_station_slot": 1,
+  "device": {
+    "lin_sn": "30415455003330355300035A",
+    "lin_index": 0,
+    "baud_rate": 19200
+  },
+  "plc": {
+    "enabled": true,
+    "plc1_ip": "192.168.10.180",
+    "plc2_ip": "192.168.10.181"
+  },
+  "scan": {
+    "scan_start": false
+  },
+  "stations": [
+    {
+      "slot": 1,
+      "name": "工位 1",
+      "enabled": true,
+      "lin_sn": "30415455003330355300035A",
+      "lin_index": 0,
+      "scanner_ip": "192.168.10.164:8888"
+    },
+    {
+      "slot": 2,
+      "name": "工位 2",
+      "enabled": true,
+      "lin_sn": "30415455003330355300035A",
+      "lin_index": 1,
+      "scanner_ip": "192.168.10.165:8888"
+    },
+    {
+      "slot": 3,
+      "name": "工位 3",
+      "enabled": true,
+      "lin_sn": "30415455003330355300021B",
+      "lin_index": 0,
+      "scanner_ip": "192.168.10.166:8888"
+    },
+    {
+      "slot": 4,
+      "name": "工位 4",
+      "enabled": true,
+      "lin_sn": "30415455003330355300021B",
+      "lin_index": 1,
+      "scanner_ip": "192.168.10.167:8888"
+    },
+    {
+      "slot": 5,
+      "name": "工位 5",
+      "enabled": true,
+      "lin_sn": "30415455003330355300023E",
+      "lin_index": 0,
+      "scanner_ip": "192.168.10.168:8888"
+    },
+    {
+      "slot": 6,
+      "name": "工位 6",
+      "enabled": true,
+      "lin_sn": "304154550033303553000239",
+      "lin_index": 0,
+      "scanner_ip": "192.168.10.169:8888"
+    },
+    {
+      "slot": 7,
+      "name": "工位 7",
+      "enabled": true,
+      "lin_sn": "30415455003330355300023B",
+      "lin_index": 0,
+      "scanner_ip": "192.168.10.170:8888"
+    },
+    {
+      "slot": 8,
+      "name": "工位 8",
+      "enabled": true,
+      "lin_sn": "30415455003330355300023B",
+      "lin_index": 1,
+      "scanner_ip": "192.168.10.171:8888"
+    },
+    {
+      "slot": 9,
+      "name": "工位 9",
+      "enabled": true,
+      "lin_sn": "30415455003330355300023C",
+      "lin_index": 0,
+      "scanner_ip": "192.168.10.172:8888"
+    },
+    {
+      "slot": 10,
+      "name": "工位 10",
+      "enabled": true,
+      "lin_sn": "30415455003330355300023C",
+      "lin_index": 1,
+      "scanner_ip": "192.168.10.173:8888"
+    }
+  ],
+  "timing": {
+    "send_interval_ms": 100,
+    "read_interval_ms": 20,
+    "watchdog_sec": 5.0
+  },
+  "step_plan": {
+    "cooldown_duration_sec": 10.0,
+    "steps": [
+      {
+        "name": "Step 1 (100%)",
+        "power_ratio": 100,
+        "duration_sec": 50.0
+      },
+      {
+        "name": "Step 2 (80%)",
+        "power_ratio": 100,
+        "duration_sec": 50.0
+      },
+      {
+        "name": "Step 3 (50%)",
+        "power_ratio": 100,
+        "duration_sec": 50.0
+      },
+      {
+        "name": "Step 4 (30%)",
+        "power_ratio": 100,
+        "duration_sec": 50.0
+      },
+      {
+        "name": "Step 5 (10%)",
+        "power_ratio": 100,
+        "duration_sec": 50.0
+      },
+      {
+        "name": "Step 6",
+        "power_ratio": 100,
+        "duration_sec": 50.0
+      },
+      {
+        "name": "Step 7",
+        "power_ratio": 100,
+        "duration_sec": 50.0
+      },
+      {
+        "name": "Step 8",
+        "power_ratio": 100,
+        "duration_sec": 50.0
+      },
+      {
+        "name": "Step 9",
+        "power_ratio": 100,
+        "duration_sec": 50.0
+      },
+      {
+        "name": "Step 10",
+        "power_ratio": 100,
+        "duration_sec": 50.0
+      },
+      {
+        "name": "Step 11",
+        "power_ratio": 100,
+        "duration_sec": 50.0
+      },
+      {
+        "name": "Step 12",
+        "power_ratio": 100,
+        "duration_sec": 50.0
+      },
+      {
+        "name": "Step 13",
+        "power_ratio": 100,
+        "duration_sec": 50.0
+      },
+      {
+        "name": "Step 14",
+        "power_ratio": 10,
+        "duration_sec": 50.0
+      },
+      {
+        "name": "Step 15",
+        "power_ratio": 10,
+        "duration_sec": 50.0
+      }
+    ]
+  },
+  "sequence": [
+    {
+      "name": "Step 1 (100%)",
+      "power_ratio": 100,
+      "duration_sec": 50.0
+    },
+    {
+      "name": "Cooldown 1",
+      "power_ratio": 0,
+      "duration_sec": 10.0
+    },
+    {
+      "name": "Step 2 (80%)",
+      "power_ratio": 100,
+      "duration_sec": 50.0
+    },
+    {
+      "name": "Cooldown 2",
+      "power_ratio": 0,
+      "duration_sec": 10.0
+    },
+    {
+      "name": "Step 3 (50%)",
+      "power_ratio": 100,
+      "duration_sec": 50.0
+    },
+    {
+      "name": "Cooldown 3",
+      "power_ratio": 0,
+      "duration_sec": 10.0
+    },
+    {
+      "name": "Step 4 (30%)",
+      "power_ratio": 100,
+      "duration_sec": 50.0
+    },
+    {
+      "name": "Cooldown 4",
+      "power_ratio": 0,
+      "duration_sec": 10.0
+    },
+    {
+      "name": "Step 5 (10%)",
+      "power_ratio": 100,
+      "duration_sec": 50.0
+    },
+    {
+      "name": "Cooldown 5",
+      "power_ratio": 0,
+      "duration_sec": 10.0
+    },
+    {
+      "name": "Step 6",
+      "power_ratio": 100,
+      "duration_sec": 50.0
+    },
+    {
+      "name": "Cooldown 6",
+      "power_ratio": 0,
+      "duration_sec": 10.0
+    },
+    {
+      "name": "Step 7",
+      "power_ratio": 100,
+      "duration_sec": 50.0
+    },
+    {
+      "name": "Cooldown 7",
+      "power_ratio": 0,
+      "duration_sec": 10.0
+    },
+    {
+      "name": "Step 8",
+      "power_ratio": 100,
+      "duration_sec": 50.0
+    },
+    {
+      "name": "Cooldown 8",
+      "power_ratio": 0,
+      "duration_sec": 10.0
+    },
+    {
+      "name": "Step 9",
+      "power_ratio": 100,
+      "duration_sec": 50.0
+    },
+    {
+      "name": "Cooldown 9",
+      "power_ratio": 0,
+      "duration_sec": 10.0
+    },
+    {
+      "name": "Step 10",
+      "power_ratio": 100,
+      "duration_sec": 50.0
+    },
+    {
+      "name": "Cooldown 10",
+      "power_ratio": 0,
+      "duration_sec": 10.0
+    },
+    {
+      "name": "Step 11",
+      "power_ratio": 100,
+      "duration_sec": 50.0
+    },
+    {
+      "name": "Cooldown 11",
+      "power_ratio": 0,
+      "duration_sec": 10.0
+    },
+    {
+      "name": "Step 12",
+      "power_ratio": 100,
+      "duration_sec": 50.0
+    },
+    {
+      "name": "Cooldown 12",
+      "power_ratio": 0,
+      "duration_sec": 10.0
+    },
+    {
+      "name": "Step 13",
+      "power_ratio": 100,
+      "duration_sec": 50.0
+    },
+    {
+      "name": "Cooldown 13",
+      "power_ratio": 0,
+      "duration_sec": 10.0
+    },
+    {
+      "name": "Step 14",
+      "power_ratio": 10,
+      "duration_sec": 50.0
+    },
+    {
+      "name": "Cooldown 14",
+      "power_ratio": 0,
+      "duration_sec": 10.0
+    },
+    {
+      "name": "Step 15",
+      "power_ratio": 10,
+      "duration_sec": 50.0
+    }
+  ]
+}

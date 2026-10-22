@@ -1,0 +1,77 @@
+{
+  "product": "A045",
+  "active_station_slot": 6,
+  "device": {
+    "lin_sn": "304154550033303553000239",
+    "lin_index": 0,
+    "baud_rate": 19200
+  },
+  "plc": {
+    "enabled": false
+  },
+  "scan": {
+    "scan_start": false
+  },
+  "stations": [
+    {
+      "slot": 6,
+      "name": "\u5de5\u4f4d 6",
+      "enabled": true,
+      "lin_sn": "304154550033303553000239",
+      "lin_index": 0,
+      "scanner_ip": "192.168.10.169:8888"
+    }
+  ],
+  "timing": {
+    "send_interval_ms": 100,
+    "read_interval_ms": 20,
+    "watchdog_sec": 5.0
+  },
+  "step_plan": {
+    "cooldown_duration_sec": 2.0,
+    "steps": [
+      {
+        "name": "Step 1 (100%)",
+        "power_ratio": 100,
+        "duration_sec": 10.0
+      },
+      {
+        "name": "Step 2 (80%)",
+        "power_ratio": 80,
+        "duration_sec": 10.0
+      },
+      {
+        "name": "Step 3 (50%)",
+        "power_ratio": 50,
+        "duration_sec": 10.0
+      }
+    ]
+  },
+  "sequence": [
+    {
+      "name": "Step 1 (100%)",
+      "power_ratio": 100,
+      "duration_sec": 10.0
+    },
+    {
+      "name": "Cooldown 1",
+      "power_ratio": 0,
+      "duration_sec": 2.0
+    },
+    {
+      "name": "Step 2 (80%)",
+      "power_ratio": 80,
+      "duration_sec": 10.0
+    },
+    {
+      "name": "Cooldown 2",
+      "power_ratio": 0,
+      "duration_sec": 2.0
+    },
+    {
+      "name": "Step 3 (50%)",
+      "power_ratio": 50,
+      "duration_sec": 10.0
+    }
+  ]
+}
