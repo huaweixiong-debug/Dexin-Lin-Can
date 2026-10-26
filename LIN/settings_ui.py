@@ -52,10 +52,6 @@ DASHBOARD_COLORS = {
     "disabled": "#E5E7EB",
 }
 
-DASHBOARD_HEADER_FONT = ("Microsoft YaHei UI", 12, "bold")
-DASHBOARD_LABEL_FONT = ("Microsoft YaHei UI", 12, "bold")
-DASHBOARD_CELL_FONT = ("Microsoft YaHei UI", 12)
-DASHBOARD_HINT_FONT = ("Microsoft YaHei UI", 11)
 RECORDS_FILE = Path(__file__).with_name("test_records.json")
 STATUS_HISTORY_LIMIT = 10
 
@@ -80,6 +76,117 @@ DEFAULT_PCB_TEMP_LABEL = "PCB温度"
 PCB_TEMP_LABELS = {
     "A064": "IGBT温度",
 }
+
+# Logical screen widths below this use the compact layout. Tk is not DPI aware on
+# Windows, so a 1920x1080 panel at 125 % scaling reports 1536x864.
+COMPACT_SCREEN_WIDTH = 1800
+# Longer dashboard values are cut with "…"; hovering the cell shows the full text.
+DASHBOARD_TEXT_LIMIT = {True: 32, False: 44}
+
+
+class ScrollableFrame(ttk.Frame):
+    """Frame whose ``content`` scrolls when it is larger than the visible area."""
+
+    def __init__(self, parent: tk.Misc, **kwargs: Any):
+        super().__init__(parent, **kwargs)
+        self.canvas = tk.Canvas(self, highlightthickness=0, borderwidth=0)
+        self._y_scroll = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self.canvas.yview)
+        self._x_scroll = ttk.Scrollbar(self, orient=tk.HORIZONTAL, command=self.canvas.xview)
+        self.canvas.configure(yscrollcommand=self._y_scroll.set, xscrollcommand=self._x_scroll.set)
+        self.canvas.grid(row=0, column=0, sticky=tk.NSEW)
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+
+        self.content = ttk.Frame(self.canvas)
+        self._window = self.canvas.create_window(0, 0, window=self.content, anchor=tk.NW)
+        self.content.bind("<Configure>", self._refit)
+        self.canvas.bind("<Configure>", self._refit)
+        # Global wheel bindings; the handler only acts while the pointer is over this frame.
+        for sequence in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+            self.bind_all(sequence, self._on_mousewheel, add="+")
+
+    def _refit(self, _event: object = None) -> None:
+        # Stretch the content to the visible width, but never below what it needs.
+        width = max(self.canvas.winfo_width(), self.content.winfo_reqwidth())
+        self.canvas.itemconfigure(self._window, width=width)
+        self.canvas.configure(scrollregion=(0, 0, width, self.content.winfo_reqheight()))
+        # Only show the scrollbars that are actually needed.
+        if self.content.winfo_reqheight() > self.canvas.winfo_height() > 1:
+            self._y_scroll.grid(row=0, column=1, sticky=tk.NS)
+        else:
+            self._y_scroll.grid_remove()
+            self.canvas.yview_moveto(0)
+        if self.content.winfo_reqwidth() > self.canvas.winfo_width() > 1:
+            self._x_scroll.grid(row=1, column=0, sticky=tk.EW)
+        else:
+            self._x_scroll.grid_remove()
+            self.canvas.xview_moveto(0)
+
+    def _pointer_inside(self, event: tk.Event) -> bool:
+        widget = self.winfo_containing(event.x_root, event.y_root)
+        while widget is not None:
+            if widget is self:
+                return True
+            widget = widget.master
+        return False
+
+    def _on_mousewheel(self, event: tk.Event) -> None:
+        if not self._pointer_inside(event):
+            return
+        if self.content.winfo_reqheight() <= self.canvas.winfo_height():
+            return
+        if getattr(event, "num", None) == 4:
+            step = -1
+        elif getattr(event, "num", None) == 5:
+            step = 1
+        else:
+            step = -1 if event.delta > 0 else 1
+        self.canvas.yview_scroll(step * 3, "units")
+
+
+class HoverTip:
+    """Shows a longer text next to a widget while the pointer rests on it."""
+
+    def __init__(self, widget: tk.Widget, text_getter):
+        self._widget = widget
+        self._text_getter = text_getter
+        self._tip: tk.Toplevel | None = None
+        widget.bind("<Enter>", self._show, add="+")
+        widget.bind("<Leave>", self._hide, add="+")
+
+    def _show(self, event: tk.Event) -> None:
+        text = self._text_getter()
+        if not text or self._tip is not None:
+            return
+        self._tip = tk.Toplevel(self._widget)
+        self._tip.wm_overrideredirect(True)
+        self._tip.wm_geometry(f"+{event.x_root + 12}+{event.y_root + 12}")
+        tk.Label(
+            self._tip,
+            text=text,
+            bg="#FFFBE6",
+            fg="#111827",
+            relief=tk.SOLID,
+            borderwidth=1,
+            wraplength=460,
+            justify=tk.LEFT,
+            padx=6,
+            pady=4,
+        ).pack()
+
+    def _hide(self, _event: object = None) -> None:
+        if self._tip is not None:
+            self._tip.destroy()
+            self._tip = None
+
+
+def bind_wraplength(label: tk.Widget, owner: tk.Widget, margin: int = 24, minimum: int = 120) -> None:
+    """Keep *label* wrapping to the current width of *owner*."""
+    owner.bind(
+        "<Configure>",
+        lambda event: label.configure(wraplength=max(event.width - margin, minimum)),
+        add="+",
+    )
 
 
 class InProcessRunTask:
@@ -156,7 +263,19 @@ class SettingsApp:
         self.completed_records: List[Dict[str, str]] = []
 
         self.root.title("LIN 多工位测试设备")
-        self.root.geometry("1680x980")
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        self.compact_layout = screen_width < COMPACT_SCREEN_WIDTH
+        base_size = 10 if self.compact_layout else 12
+        self.dashboard_header_font = ("Microsoft YaHei UI", base_size, "bold")
+        self.dashboard_label_font = ("Microsoft YaHei UI", base_size, "bold")
+        self.dashboard_cell_font = ("Microsoft YaHei UI", base_size)
+        self.dashboard_text_limit = DASHBOARD_TEXT_LIMIT[self.compact_layout]
+        self.dashboard_cell_details: Dict[tuple[str, int], str] = {}
+        style = ttk.Style(self.root)
+        style.configure("Compact.TButton", padding=(4, 1))
+        self.root.geometry(f"{min(1680, screen_width)}x{min(980, max(screen_height - 80, 600))}")
+        self.root.minsize(1100, 640)
         try:
             self.root.state("zoomed")
         except tk.TclError:
@@ -248,9 +367,9 @@ class SettingsApp:
         tk.Label(
             grid_frame,
             text="项目",
-            width=16,
+            width=self._dashboard_label_width(),
             anchor=tk.CENTER,
-            font=DASHBOARD_LABEL_FONT,
+            font=self.dashboard_label_font,
             bg=DASHBOARD_COLORS["header"],
             relief=tk.RIDGE,
         ).grid(row=0, column=0, sticky=tk.NSEW, padx=1, pady=1)
@@ -260,13 +379,14 @@ class SettingsApp:
             header_lbl = tk.Label(
                 grid_frame,
                 textvariable=header_var,
-                width=18,
+                width=1,
                 anchor=tk.CENTER,
                 relief=tk.RIDGE,
-                font=DASHBOARD_HEADER_FONT,
+                font=self.dashboard_header_font,
                 bg=DASHBOARD_COLORS["header"],
             )
             header_lbl.grid(row=0, column=slot, sticky=tk.NSEW, padx=1, pady=1)
+            self._bind_cell_wraplength(header_lbl)
             self.dashboard_header_widgets[slot] = header_lbl
 
         # Row 1: Buttons
@@ -276,8 +396,8 @@ class SettingsApp:
             text="操作",
             anchor=tk.CENTER,
             relief=tk.RIDGE,
-            width=16,
-            font=DASHBOARD_LABEL_FONT,
+            width=self._dashboard_label_width(),
+            font=self.dashboard_label_font,
             bg=DASHBOARD_COLORS["label"],
         ).grid(row=button_row, column=0, sticky=tk.NSEW, padx=1, pady=1)
         for slot in range(1, STATION_COUNT + 1):
@@ -300,8 +420,8 @@ class SettingsApp:
                 **label_options,
                 anchor=tk.W,
                 relief=tk.RIDGE,
-                width=16,
-                font=DASHBOARD_LABEL_FONT,
+                width=self._dashboard_label_width(),
+                font=self.dashboard_label_font,
                 bg=DASHBOARD_COLORS["label"],
             ).grid(row=row_index, column=0, sticky=tk.NSEW, padx=1, pady=2)
             self.dashboard_cell_vars[row_key] = {}
@@ -314,22 +434,37 @@ class SettingsApp:
                     textvariable=cell_var,
                     anchor=tk.CENTER,
                     relief=tk.RIDGE,
-                    width=18,
-                    font=DASHBOARD_CELL_FONT,
+                    width=1,
+                    font=self.dashboard_cell_font,
                     bg=DASHBOARD_COLORS["blank"],
                     fg="#111827",
-                    wraplength=130,
                     justify=tk.CENTER,
                 )
                 cell_lbl.grid(row=row_index, column=slot, sticky=tk.NSEW, padx=1, pady=2)
+                self._bind_cell_wraplength(cell_lbl)
+                HoverTip(cell_lbl, lambda key=(row_key, slot): self.dashboard_cell_details.get(key, ""))
                 self.dashboard_cell_widgets[row_key][slot] = cell_lbl
 
-        for column in range(STATION_COUNT + 1):
-            grid_frame.columnconfigure(column, weight=1)
+        # Station columns share the width equally instead of demanding a fixed text width.
+        grid_frame.columnconfigure(0, weight=0)
+        for column in range(1, STATION_COUNT + 1):
+            grid_frame.columnconfigure(column, weight=1, uniform="station")
+        row_minsize = 28 if self.compact_layout else 40
         for row in range(len(DASHBOARD_ROWS) + 2):
-            grid_frame.rowconfigure(row, weight=1, minsize=54)
+            grid_frame.rowconfigure(row, weight=1, minsize=row_minsize)
 
         self._update_dashboard_button_states()
+
+    def _dashboard_label_width(self) -> int:
+        return 8 if self.compact_layout else 12
+
+    @staticmethod
+    def _bind_cell_wraplength(label: tk.Label) -> None:
+        label.bind(
+            "<Configure>",
+            lambda event: label.configure(wraplength=max(event.width - 8, 40)),
+            add="+",
+        )
 
     def _refresh_product_presentation(self, *_args: object) -> None:
         product_code = self.product_var.get().strip().upper() or DEFAULT_PRODUCT_CODE
@@ -433,39 +568,50 @@ class SettingsApp:
         ttk.Button(top_tools, text="保存配置", command=self.save_from_form).pack(side=tk.RIGHT)
         ttk.Button(top_tools, text="保存并运行", command=self.save_and_run).pack(side=tk.RIGHT, padx=(0, 8))
 
-        content_frame = ttk.Frame(parent)
-        content_frame.pack(fill=tk.BOTH, expand=True)
+        # Status line stays visible below the toolbar; the rest of the page scrolls.
+        status_label = ttk.Label(parent, textvariable=self.status_var, foreground="#1f4e79", justify=tk.LEFT)
+        status_label.pack(fill=tk.X, pady=(0, 6))
+        bind_wraplength(status_label, parent)
+
+        page = ScrollableFrame(parent)
+        page.pack(fill=tk.BOTH, expand=True)
+        content_frame = page.content
+        content_frame.columnconfigure(0, weight=3)
+        content_frame.columnconfigure(1, weight=2)
+        content_frame.rowconfigure(0, weight=1)
 
         left_column = ttk.Frame(content_frame)
-        left_column.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        left_column.grid(row=0, column=0, sticky=tk.NSEW)
 
-        right_column = ttk.Frame(content_frame, width=620)
-        right_column.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False, padx=(12, 0))
-        right_column.pack_propagate(False)
+        right_column = ttk.Frame(content_frame)
+        right_column.grid(row=0, column=1, sticky=tk.NSEW, padx=(12, 0))
 
-        scan_frame = ttk.LabelFrame(left_column, text="设备扫描", padding=10)
-        scan_frame.pack(fill=tk.X, pady=(0, 10))
+        scan_frame = ttk.LabelFrame(left_column, text="设备扫描", padding=8)
+        scan_frame.pack(fill=tk.X, pady=(0, 8))
+        scan_frame.columnconfigure(1, weight=1)
         ttk.Label(scan_frame, text="已扫描 USB2XXX").grid(row=0, column=0, sticky=tk.W, padx=(0, 8), pady=4)
         self.scanned_device_combo = ttk.Combobox(
             scan_frame,
             textvariable=self.scanned_device_var,
-            width=78,
+            width=36,
             state="readonly",
         )
-        self.scanned_device_combo.grid(row=0, column=1, columnspan=3, sticky=tk.W, pady=4)
+        self.scanned_device_combo.grid(row=0, column=1, sticky=tk.EW, pady=4)
         self.scanned_device_combo.bind("<<ComboboxSelected>>", self._on_scanned_device_selected)
         ttk.Button(scan_frame, text="扫描设备", command=self.scan_lin_devices).grid(
-            row=0, column=4, sticky=tk.W, padx=(16, 8), pady=4
+            row=0, column=2, sticky=tk.W, padx=(12, 8), pady=4
         )
         ttk.Button(scan_frame, text="填入当前工位", command=self.use_selected_scanned_device).grid(
-            row=0, column=5, sticky=tk.W, pady=4
+            row=0, column=3, sticky=tk.W, pady=4
         )
 
-        station_frame = ttk.LabelFrame(left_column, text="10 工位 LIN / 扫码配置", padding=10)
-        station_frame.pack(fill=tk.X, pady=(0, 10))
-        station_headers = ["工位", "启用", "名称", "LIN 序列号", "LIN Index", "扫码枪 IP", "当前工位", "填入"]
+        station_frame = ttk.LabelFrame(left_column, text="10 工位 LIN / 扫码配置", padding=8)
+        station_frame.pack(fill=tk.X, pady=(0, 8))
+        station_headers = ["工位", "启用", "名称", "LIN 序列号", "Index", "扫码枪 IP", "当前", "填入"]
         for column, header in enumerate(station_headers):
-            ttk.Label(station_frame, text=header).grid(row=0, column=column, sticky=tk.W, padx=6, pady=(0, 8))
+            ttk.Label(station_frame, text=header).grid(row=0, column=column, sticky=tk.W, padx=4, pady=(0, 6))
+        station_frame.columnconfigure(3, weight=2)
+        station_frame.columnconfigure(5, weight=1)
 
         self.station_rows = []
         for slot in range(1, STATION_COUNT + 1):
@@ -474,20 +620,21 @@ class SettingsApp:
             lin_sn_var = tk.StringVar()
             lin_index_var = tk.StringVar(value="0")
             scanner_ip_var = tk.StringVar()
-            ttk.Label(station_frame, text=f"工位 {slot}").grid(row=slot, column=0, sticky=tk.W, padx=6, pady=4)
-            ttk.Checkbutton(station_frame, variable=enabled_var).grid(row=slot, column=1, sticky=tk.W, padx=6, pady=4)
-            ttk.Entry(station_frame, textvariable=name_var, width=12).grid(row=slot, column=2, sticky=tk.W, padx=6, pady=4)
-            ttk.Entry(station_frame, textvariable=lin_sn_var, width=34).grid(row=slot, column=3, sticky=tk.W, padx=6, pady=4)
-            ttk.Entry(station_frame, textvariable=lin_index_var, width=8).grid(row=slot, column=4, sticky=tk.W, padx=6, pady=4)
-            ttk.Entry(station_frame, textvariable=scanner_ip_var, width=20).grid(row=slot, column=5, sticky=tk.W, padx=6, pady=4)
+            ttk.Label(station_frame, text=f"工位 {slot}").grid(row=slot, column=0, sticky=tk.W, padx=4, pady=2)
+            ttk.Checkbutton(station_frame, variable=enabled_var).grid(row=slot, column=1, sticky=tk.W, padx=4, pady=2)
+            ttk.Entry(station_frame, textvariable=name_var, width=9).grid(row=slot, column=2, sticky=tk.W, padx=4, pady=2)
+            ttk.Entry(station_frame, textvariable=lin_sn_var, width=26).grid(row=slot, column=3, sticky=tk.EW, padx=4, pady=2)
+            ttk.Entry(station_frame, textvariable=lin_index_var, width=5).grid(row=slot, column=4, sticky=tk.W, padx=4, pady=2)
+            ttk.Entry(station_frame, textvariable=scanner_ip_var, width=19).grid(row=slot, column=5, sticky=tk.EW, padx=4, pady=2)
             ttk.Radiobutton(station_frame, variable=self.active_station_var, value=str(slot)).grid(
-                row=slot, column=6, sticky=tk.W, padx=12, pady=4
+                row=slot, column=6, sticky=tk.W, padx=8, pady=2
             )
             ttk.Button(
                 station_frame,
                 text="填入序列号",
+                style="Compact.TButton",
                 command=lambda current_slot=slot: self.apply_scanned_device_to_station(current_slot),
-            ).grid(row=slot, column=7, sticky=tk.W, padx=6, pady=4)
+            ).grid(row=slot, column=7, sticky=tk.W, padx=4, pady=2)
             self.station_rows.append(
                 {
                     "slot": slot,
@@ -499,8 +646,8 @@ class SettingsApp:
                 }
             )
 
-        plc_frame = ttk.LabelFrame(left_column, text="PLC / 扫码联动", padding=10)
-        plc_frame.pack(fill=tk.X, pady=(0, 10))
+        plc_frame = ttk.LabelFrame(left_column, text="PLC / 扫码联动", padding=8)
+        plc_frame.pack(fill=tk.X, pady=(0, 8))
         ttk.Checkbutton(plc_frame, text="启用 PLC 联动", variable=self.plc_enabled_var).grid(
             row=0, column=0, sticky=tk.W, padx=(0, 16), pady=4
         )
@@ -508,69 +655,67 @@ class SettingsApp:
             row=0, column=1, sticky=tk.W, padx=(0, 16), pady=4
         )
         ttk.Label(plc_frame, text="PLC1 IP").grid(row=1, column=0, sticky=tk.W, padx=(0, 8), pady=4)
-        ttk.Entry(plc_frame, textvariable=self.plc1_ip_var, width=18).grid(row=1, column=1, sticky=tk.W, pady=4)
-        ttk.Label(plc_frame, text="PLC2 IP").grid(row=1, column=2, sticky=tk.W, padx=(24, 8), pady=4)
-        ttk.Entry(plc_frame, textvariable=self.plc2_ip_var, width=18).grid(row=1, column=3, sticky=tk.W, pady=4)
-        ttk.Label(plc_frame, text="服务状态").grid(row=0, column=2, sticky=tk.W, padx=(24, 8), pady=4)
+        ttk.Entry(plc_frame, textvariable=self.plc1_ip_var, width=16).grid(row=1, column=1, sticky=tk.W, pady=4)
+        ttk.Label(plc_frame, text="PLC2 IP").grid(row=1, column=2, sticky=tk.W, padx=(16, 8), pady=4)
+        ttk.Entry(plc_frame, textvariable=self.plc2_ip_var, width=16).grid(row=1, column=3, sticky=tk.W, pady=4)
+        ttk.Label(plc_frame, text="服务状态").grid(row=0, column=2, sticky=tk.W, padx=(16, 8), pady=4)
         ttk.Label(plc_frame, textvariable=self.control_service_status_var).grid(row=0, column=3, sticky=tk.W, pady=4)
 
-        timing_frame = ttk.LabelFrame(left_column, text="通信参数", padding=10)
-        self.timing_frame = timing_frame
-        timing_frame.pack(fill=tk.X, pady=(0, 10))
-        ttk.Label(timing_frame, text="波特率").grid(row=0, column=0, sticky=tk.W, padx=(0, 8), pady=4)
-        ttk.Entry(timing_frame, textvariable=self.baud_rate_var, width=10).grid(row=0, column=1, sticky=tk.W, pady=4)
-        ttk.Label(timing_frame, text="发送间隔(ms)").grid(row=0, column=2, sticky=tk.W, padx=(24, 8), pady=4)
-        ttk.Entry(timing_frame, textvariable=self.send_interval_var, width=10).grid(row=0, column=3, sticky=tk.W, pady=4)
-        ttk.Label(timing_frame, text="读取间隔(ms)").grid(row=0, column=4, sticky=tk.W, padx=(24, 8), pady=4)
-        ttk.Entry(timing_frame, textvariable=self.read_interval_var, width=10).grid(row=0, column=5, sticky=tk.W, pady=4)
-        ttk.Label(timing_frame, text="Watchdog(s)").grid(row=1, column=0, sticky=tk.W, padx=(0, 8), pady=4)
-        ttk.Entry(timing_frame, textvariable=self.watchdog_var, width=10).grid(row=1, column=1, sticky=tk.W, pady=4)
-        ttk.Label(timing_frame, text="冷却时长(s)").grid(row=1, column=2, sticky=tk.W, padx=(24, 8), pady=4)
-        ttk.Entry(timing_frame, textvariable=self.cooldown_duration_var, width=10).grid(row=1, column=3, sticky=tk.W, pady=4)
-
-        template_frame = ttk.LabelFrame(left_column, text="配置模板", padding=10)
-        template_frame.pack(fill=tk.X, pady=(0, 10))
+        template_frame = ttk.LabelFrame(left_column, text="配置模板", padding=8)
+        template_frame.pack(fill=tk.X, pady=(0, 8))
         ttk.Label(template_frame, text="模板名称").grid(row=0, column=0, sticky=tk.W, padx=(0, 8), pady=4)
-        ttk.Entry(template_frame, textvariable=self.template_name_var, width=24).grid(
+        ttk.Entry(template_frame, textvariable=self.template_name_var, width=22).grid(
             row=0, column=1, sticky=tk.W, pady=4
         )
         ttk.Button(template_frame, text="保存模板", command=self.save_as_template).grid(
             row=0, column=2, sticky=tk.W, padx=(8, 0), pady=4
         )
-        ttk.Label(template_frame, text="已有模板").grid(row=0, column=3, sticky=tk.W, padx=(24, 8), pady=4)
+        ttk.Label(template_frame, text="已有模板").grid(row=1, column=0, sticky=tk.W, padx=(0, 8), pady=4)
         self.template_combo = ttk.Combobox(
             template_frame,
             textvariable=self.template_select_var,
-            width=24,
+            width=20,
             state="readonly",
         )
-        self.template_combo.grid(row=0, column=4, sticky=tk.W, pady=4)
-        ttk.Button(template_frame, text="加载模板", command=self.load_selected_template).grid(
-            row=0, column=5, sticky=tk.W, padx=(8, 0), pady=4
+        self.template_combo.grid(row=1, column=1, sticky=tk.W, pady=4)
+        template_actions = ttk.Frame(template_frame)
+        template_actions.grid(row=1, column=2, sticky=tk.W, padx=(8, 0), pady=4)
+        ttk.Button(template_actions, text="加载模板", command=self.load_selected_template).pack(side=tk.LEFT)
+        ttk.Button(template_actions, text="重命名模板", command=self.rename_selected_template).pack(
+            side=tk.LEFT, padx=(8, 0)
         )
-        ttk.Button(template_frame, text="重命名模板", command=self.rename_selected_template).grid(
-            row=0, column=6, sticky=tk.W, padx=(8, 0), pady=4
-        )
-        ttk.Button(template_frame, text="删除模板", command=self.delete_selected_template).grid(
-            row=0, column=7, sticky=tk.W, padx=(8, 0), pady=4
+        ttk.Button(template_actions, text="删除模板", command=self.delete_selected_template).pack(
+            side=tk.LEFT, padx=(8, 0)
         )
 
-        ttk.Label(left_column, textvariable=self.status_var, foreground="#1f4e79").pack(anchor=tk.W, pady=(10, 0))
+        # Product-specific settings sit together in the right column.
+        timing_frame = ttk.LabelFrame(right_column, text="通信参数", padding=8)
+        self.timing_frame = timing_frame
+        timing_frame.pack(fill=tk.X, pady=(0, 8))
+        timing_fields = [
+            ("波特率", self.baud_rate_var),
+            ("发送间隔(ms)", self.send_interval_var),
+            ("读取间隔(ms)", self.read_interval_var),
+            ("Watchdog(s)", self.watchdog_var),
+            ("冷却时长(s)", self.cooldown_duration_var),
+        ]
+        for index, (label_text, variable) in enumerate(timing_fields):
+            row, column = divmod(index, 3)
+            ttk.Label(timing_frame, text=label_text).grid(
+                row=row, column=column * 2, sticky=tk.W, padx=(0 if column == 0 else 16, 6), pady=4
+            )
+            ttk.Entry(timing_frame, textvariable=variable, width=8).grid(row=row, column=column * 2 + 1, sticky=tk.W, pady=4)
 
-        sequence_frame = ttk.LabelFrame(right_column, text="测试步骤配置（功率比例 0% - 100%）", padding=10)
+        sequence_frame = ttk.LabelFrame(right_column, text="测试步骤配置（功率比例 0% - 100%）", padding=8)
         self.sequence_frame = sequence_frame
         sequence_frame.pack(fill=tk.BOTH, expand=True)
-        sequence_headers = ["步骤名", "功率比例", "持续(s)", "操作"]
-        for column, header in enumerate(sequence_headers):
-            ttk.Label(sequence_frame, text=header).grid(row=0, column=column, sticky=tk.W, padx=6, pady=(0, 8))
-
         self.sequence_container = ttk.Frame(sequence_frame)
-        self.sequence_container.grid(row=1, column=0, columnspan=4, sticky=tk.NSEW)
+        self.sequence_container.grid(row=0, column=0, sticky=tk.NSEW)
         sequence_frame.columnconfigure(0, weight=1)
-        sequence_frame.rowconfigure(1, weight=1)
+        sequence_frame.rowconfigure(0, weight=1)
 
         sequence_action_frame = ttk.Frame(sequence_frame)
-        sequence_action_frame.grid(row=2, column=0, columnspan=4, sticky=tk.W, pady=(10, 0))
+        sequence_action_frame.grid(row=1, column=0, sticky=tk.W, pady=(8, 0))
         ttk.Button(sequence_action_frame, text="新增步骤", command=self.add_step_row).pack(side=tk.LEFT)
         ttk.Button(sequence_action_frame, text="删除末项", command=self.remove_last_step_row).pack(
             side=tk.LEFT, padx=(8, 0)
@@ -1377,37 +1522,39 @@ class SettingsApp:
         for child in self.sequence_container.winfo_children():
             child.destroy()
 
+        container = self.sequence_container
+        for column, header in enumerate(["步骤名", "功率%", "持续(s)", "操作"]):
+            ttk.Label(container, text=header).grid(row=0, column=column, sticky=tk.W, padx=4, pady=(0, 6))
+        container.columnconfigure(0, weight=1)
+
         self.sequence_rows = []
         for row_index, step in enumerate(sequence):
+            grid_row = row_index + 1
             name_var = tk.StringVar(value=str(step["name"]))
             power_var = tk.StringVar(value=str(step["power_ratio"]))
             duration_var = tk.StringVar(value=str(step["duration_sec"]))
-            ttk.Entry(self.sequence_container, textvariable=name_var, width=34).grid(
-                row=row_index, column=0, sticky=tk.W, padx=6, pady=4
+            ttk.Entry(container, textvariable=name_var, width=18).grid(
+                row=grid_row, column=0, sticky=tk.EW, padx=4, pady=2
             )
-            ttk.Entry(self.sequence_container, textvariable=power_var, width=12).grid(
-                row=row_index, column=1, sticky=tk.W, padx=6, pady=4
+            ttk.Entry(container, textvariable=power_var, width=5).grid(
+                row=grid_row, column=1, sticky=tk.W, padx=4, pady=2
             )
-            ttk.Entry(self.sequence_container, textvariable=duration_var, width=12).grid(
-                row=row_index, column=2, sticky=tk.W, padx=6, pady=4
+            ttk.Entry(container, textvariable=duration_var, width=7).grid(
+                row=grid_row, column=2, sticky=tk.W, padx=4, pady=2
             )
-            button_box = ttk.Frame(self.sequence_container)
-            button_box.grid(row=row_index, column=3, sticky=tk.W, padx=6, pady=4)
-            ttk.Button(button_box, text="上移", width=6, command=lambda idx=row_index: self.move_step_row(idx, -1)).pack(
-                side=tk.LEFT
-            )
-            ttk.Button(button_box, text="下移", width=6, command=lambda idx=row_index: self.move_step_row(idx, 1)).pack(
-                side=tk.LEFT, padx=(4, 0)
-            )
-            ttk.Button(button_box, text="插入", width=6, command=lambda idx=row_index: self.insert_step_row(idx)).pack(
-                side=tk.LEFT, padx=(4, 0)
-            )
-            ttk.Button(button_box, text="复制", width=6, command=lambda idx=row_index: self.duplicate_step_row(idx)).pack(
-                side=tk.LEFT, padx=(4, 0)
-            )
-            ttk.Button(button_box, text="删除", width=6, command=lambda idx=row_index: self.delete_step_row(idx)).pack(
-                side=tk.LEFT, padx=(4, 0)
-            )
+            button_box = ttk.Frame(container)
+            button_box.grid(row=grid_row, column=3, sticky=tk.W, padx=4, pady=2)
+            actions = [
+                ("上移", lambda idx=row_index: self.move_step_row(idx, -1)),
+                ("下移", lambda idx=row_index: self.move_step_row(idx, 1)),
+                ("插入", lambda idx=row_index: self.insert_step_row(idx)),
+                ("复制", lambda idx=row_index: self.duplicate_step_row(idx)),
+                ("删除", lambda idx=row_index: self.delete_step_row(idx)),
+            ]
+            for action_index, (text, command) in enumerate(actions):
+                ttk.Button(button_box, text=text, width=4, style="Compact.TButton", command=command).pack(
+                    side=tk.LEFT, padx=(0 if action_index == 0 else 2, 0)
+                )
             self.sequence_rows.append(
                 {
                     "name": name_var,
@@ -1568,17 +1715,36 @@ class SettingsApp:
     def _reset_dashboard_station(self, slot: int) -> None:
         for row_key, _ in DASHBOARD_ROWS:
             self.dashboard_cell_vars[row_key][slot].set("")
+            self.dashboard_cell_details.pop((row_key, slot), None)
             widget = self.dashboard_cell_widgets.get(row_key, {}).get(slot)
             if widget is not None:
                 widget.config(bg=DASHBOARD_COLORS["blank"], fg="#111827")
 
-    def _set_dashboard_cell(self, slot: int, row_key: str, value: str, state: str | None = None) -> None:
-        display = value.replace("/", "/\n") if len(value) > 14 else value
+    def _set_dashboard_cell(
+        self,
+        slot: int,
+        row_key: str,
+        value: str,
+        state: str | None = None,
+        detail: str | None = None,
+    ) -> None:
+        display = self._dashboard_display_text(value)
+        if detail is None and display.replace("\n", "") != value:
+            detail = value
+        self.dashboard_cell_details[(row_key, slot)] = detail or ""
         if row_key in self.dashboard_cell_vars and slot in self.dashboard_cell_vars[row_key]:
             self.dashboard_cell_vars[row_key][slot].set(display)
         widget = self.dashboard_cell_widgets.get(row_key, {}).get(slot)
         if widget is not None:
-            widget.config(bg=self._dashboard_color_for_state(state, value), fg="#111827", wraplength=130, justify=tk.CENTER)
+            widget.config(bg=self._dashboard_color_for_state(state, value), fg="#111827", justify=tk.CENTER)
+
+    def _dashboard_display_text(self, value: str) -> str:
+        limit = self.dashboard_text_limit
+        text = value if len(value) <= limit else value[: limit - 1] + "…"
+        if len(text) > 14:
+            # "fault/0x4:..." or "normal/no_fault": put the detail on its own line.
+            text = re.sub(r"^([A-Za-z_]+)/", "\\1/\n", text)
+        return text
 
     def _has_running_station_tasks(self) -> bool:
         for task in self.run_processes.values():
@@ -1599,12 +1765,14 @@ class SettingsApp:
         ttk.Label(status_frame, text="进程状态").grid(row=0, column=0, sticky=tk.W, padx=(0, 8))
         ttk.Label(status_frame, textvariable=self.run_process_status_var).grid(row=0, column=1, sticky=tk.W)
         ttk.Label(status_frame, text="最新事件").grid(row=1, column=0, sticky=tk.NW, padx=(0, 8), pady=(8, 0))
-        ttk.Label(
+        latest_event_label = ttk.Label(
             status_frame,
             textvariable=self.run_latest_event_var,
-            wraplength=920,
             justify=tk.LEFT,
-        ).grid(row=1, column=1, sticky=tk.W, pady=(8, 0))
+        )
+        latest_event_label.grid(row=1, column=1, sticky=tk.W, pady=(8, 0))
+        status_frame.columnconfigure(1, weight=1)
+        bind_wraplength(latest_event_label, status_frame, margin=90)
 
         card_frame = ttk.LabelFrame(container, text="运行状态卡片", padding=10)
         card_frame.pack(fill=tk.X, pady=(0, 10))
@@ -1624,17 +1792,21 @@ class SettingsApp:
             row = index // 5
             column = (index % 5) * 2
             label_options = {"textvariable": label_text} if isinstance(label_text, tk.StringVar) else {"text": label_text}
-            ttk.Label(card_frame, **label_options).grid(row=row, column=column, sticky=tk.W, padx=(0, 8), pady=4)
-            ttk.Label(card_frame, textvariable=value_var).grid(
-                row=row, column=column + 1, sticky=tk.W, padx=(0, 16), pady=4
-            )
+            ttk.Label(card_frame, **label_options).grid(row=row, column=column, sticky=tk.NW, padx=(0, 8), pady=4)
+            # Values wrap inside their column so a long fault text cannot push the row off screen.
+            value_label = ttk.Label(card_frame, textvariable=value_var, wraplength=160, justify=tk.LEFT, anchor=tk.NW)
+            value_label.grid(row=row, column=column + 1, sticky=tk.NSEW, padx=(0, 16), pady=4)
+            self._bind_cell_wraplength(value_label)
+        for column in range(1, 10, 2):
+            card_frame.columnconfigure(column, weight=1, uniform="card_value")
         ttk.Label(card_frame, text="最新汇总").grid(row=2, column=0, sticky=tk.NW, padx=(0, 8), pady=(8, 0))
-        ttk.Label(
+        summary_label = ttk.Label(
             card_frame,
             textvariable=self.run_summary_var,
-            wraplength=1020,
             justify=tk.LEFT,
-        ).grid(row=2, column=1, columnspan=9, sticky=tk.W, pady=(8, 0))
+        )
+        summary_label.grid(row=2, column=1, columnspan=9, sticky=tk.W, pady=(8, 0))
+        bind_wraplength(summary_label, card_frame, margin=110)
 
         summary_frame = ttk.LabelFrame(container, text="步骤汇总表", padding=10)
         summary_frame.pack(fill=tk.X, pady=(0, 10))
@@ -1650,7 +1822,9 @@ class SettingsApp:
             "end_run",
             "end_hv",
         )
-        self.run_summary_tree = ttk.Treeview(summary_frame, columns=columns, show="headings", height=6)
+        self.run_summary_tree = ttk.Treeview(
+            summary_frame, columns=columns, show="headings", height=4 if self.compact_layout else 6
+        )
         headers = {
             "station": "工位",
             "step": "步骤",
@@ -1677,11 +1851,10 @@ class SettingsApp:
         }
         for column in columns:
             self.run_summary_tree.heading(column, text=headers[column])
-            self.run_summary_tree.column(column, width=widths[column], anchor=tk.CENTER, stretch=False)
-        self.run_summary_tree.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        summary_scroll = ttk.Scrollbar(summary_frame, orient=tk.VERTICAL, command=self.run_summary_tree.yview)
-        summary_scroll.pack(side=tk.RIGHT, fill=tk.Y)
-        self.run_summary_tree.configure(yscrollcommand=summary_scroll.set)
+            self.run_summary_tree.column(
+                column, width=widths[column], minwidth=40, anchor=tk.CENTER, stretch=column == "name"
+            )
+        self._grid_with_scrollbars(summary_frame, self.run_summary_tree)
 
         button_frame = ttk.Frame(container)
         button_frame.pack(fill=tk.X, pady=(0, 10))
@@ -1691,11 +1864,20 @@ class SettingsApp:
 
         log_frame = ttk.LabelFrame(container, text="原始日志", padding=8)
         log_frame.pack(fill=tk.BOTH, expand=True)
-        self.run_log_text = tk.Text(log_frame, wrap=tk.NONE, font=("Consolas", 10))
-        self.run_log_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        log_scroll = ttk.Scrollbar(log_frame, orient=tk.VERTICAL, command=self.run_log_text.yview)
-        log_scroll.pack(side=tk.RIGHT, fill=tk.Y)
-        self.run_log_text.configure(yscrollcommand=log_scroll.set)
+        self.run_log_text = tk.Text(log_frame, wrap=tk.NONE, font=("Consolas", 10), height=8)
+        self._grid_with_scrollbars(log_frame, self.run_log_text)
+
+    @staticmethod
+    def _grid_with_scrollbars(frame: tk.Misc, widget: tk.Widget) -> None:
+        """Place *widget* in *frame* with vertical and horizontal scrollbars."""
+        y_scroll = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=widget.yview)
+        x_scroll = ttk.Scrollbar(frame, orient=tk.HORIZONTAL, command=widget.xview)
+        widget.configure(yscrollcommand=y_scroll.set, xscrollcommand=x_scroll.set)
+        widget.grid(row=0, column=0, sticky=tk.NSEW)
+        y_scroll.grid(row=0, column=1, sticky=tk.NS)
+        x_scroll.grid(row=1, column=0, sticky=tk.EW)
+        frame.rowconfigure(0, weight=1)
+        frame.columnconfigure(0, weight=1)
 
     def _build_query_tab(self, parent: ttk.Frame) -> None:
         top_frame = ttk.Frame(parent)
@@ -1707,12 +1889,17 @@ class SettingsApp:
 
         info_frame = ttk.LabelFrame(parent, text="查询说明", padding=8)
         info_frame.pack(fill=tk.X, pady=(0, 10))
-        ttk.Label(
+        info_label = ttk.Label(
             info_frame,
             text="全量查询会逐个读取所有已预加载工位的当前状态，不启动测试流程，只做状态读取。",
-            wraplength=1600,
             justify=tk.LEFT,
-        ).pack(anchor=tk.W)
+        )
+        info_label.pack(anchor=tk.W)
+        bind_wraplength(info_label, info_frame)
+
+        # Packed before the expanding tables so it is never squeezed off the bottom.
+        filter_frame = ttk.LabelFrame(parent, text="筛选记录", padding=8)
+        filter_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=(10, 0))
 
         result_frame = ttk.LabelFrame(parent, text="全量查询结果", padding=10)
         result_frame.pack(fill=tk.BOTH, expand=True)
@@ -1731,7 +1918,7 @@ class SettingsApp:
             "pcb_temp",
             "query_time",
         )
-        self.query_tree = ttk.Treeview(result_frame, columns=columns, show="headings", height=18)
+        self.query_tree = ttk.Treeview(result_frame, columns=columns, show="headings", height=6)
         headers = {
             "station": "工位",
             "name": "名称",
@@ -1753,7 +1940,7 @@ class SettingsApp:
             "sn": 240,
             "index": 60,
             "run_state": 90,
-            "fault": 150,
+            "fault": 220,
             "left_power": 80,
             "right_power": 80,
             "hv": 80,
@@ -1764,11 +1951,10 @@ class SettingsApp:
         }
         for column in columns:
             self.query_tree.heading(column, text=headers[column])
-            self.query_tree.column(column, width=widths[column], anchor=tk.CENTER, stretch=False)
-        self.query_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scroll = ttk.Scrollbar(result_frame, orient=tk.VERTICAL, command=self.query_tree.yview)
-        scroll.pack(side=tk.RIGHT, fill=tk.Y)
-        self.query_tree.configure(yscrollcommand=scroll.set)
+            self.query_tree.column(
+                column, width=widths[column], minwidth=40, anchor=tk.CENTER, stretch=column == "fault"
+            )
+        self._grid_with_scrollbars(result_frame, self.query_tree)
 
         record_frame = ttk.LabelFrame(parent, text="测试完成记录", padding=10)
         record_frame.pack(fill=tk.BOTH, expand=True, pady=(10, 0))
@@ -1787,7 +1973,7 @@ class SettingsApp:
             "right_power",
             "hv",
         )
-        self.query_record_tree = ttk.Treeview(record_frame, columns=record_columns, show="headings", height=10)
+        self.query_record_tree = ttk.Treeview(record_frame, columns=record_columns, show="headings", height=5)
         record_headers = {
             "station": "工位",
             "name": "名称",
@@ -1820,15 +2006,12 @@ class SettingsApp:
         }
         for column in record_columns:
             self.query_record_tree.heading(column, text=record_headers[column])
-            self.query_record_tree.column(column, width=record_widths[column], anchor=tk.CENTER, stretch=False)
-        self.query_record_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        record_scroll = ttk.Scrollbar(record_frame, orient=tk.VERTICAL, command=self.query_record_tree.yview)
-        record_scroll.pack(side=tk.RIGHT, fill=tk.Y)
-        self.query_record_tree.configure(yscrollcommand=record_scroll.set)
+            self.query_record_tree.column(
+                column, width=record_widths[column], minwidth=40, anchor=tk.CENTER, stretch=column == "fault"
+            )
+        self._grid_with_scrollbars(record_frame, self.query_record_tree)
 
-        # Filter panel
-        filter_frame = ttk.LabelFrame(parent, text="筛选记录", padding=8)
-        filter_frame.pack(fill=tk.X, pady=(10, 0))
+        # Filter panel (frame created above so it keeps its space)
         ttk.Label(filter_frame, text="开始日期").pack(side=tk.LEFT, padx=(0, 4))
         self.filter_date_start_var = tk.StringVar()
         ttk.Entry(filter_frame, textvariable=self.filter_date_start_var, width=12).pack(side=tk.LEFT, padx=(0, 12))
@@ -2548,7 +2731,8 @@ class SettingsApp:
         summary = self._parse_summary_line(line)
         if not summary:
             return
-        self._set_dashboard_cell(station_slot, "summary", line, state="blank")
+        compact = f"第{summary['step']}步 {summary['end_left']}/{summary['end_right']} {summary['end_hv']}"
+        self._set_dashboard_cell(station_slot, "summary", compact, state="blank", detail=line)
         self._set_dashboard_cell(station_slot, "result", summary["end_run"], state="blank")
 
 
