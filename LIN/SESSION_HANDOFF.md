@@ -1361,3 +1361,21 @@ python -m unittest test_a045_protocol.py test_main_config.py
 1. A064 定义表“报文示例”中 0x16 的 Data[4]=0x02 按矩阵位定义是 FaultState=1、Status=0，与备注“Status=1；无故障”矛盾；程序按矩阵（bit32=Status，bit33=FaultState）实现，需用样件抓一帧确认。
 2. A063 16 位信号（PowerSet、POWER_1/2）按小端实现，首件需确认。
 3. 老化判据中的功率 ±10%、高压 ±5 V、温度余量等数值判定尚未实现（与 A045/A050 一致，目前只按故障位判 NG）。
+
+## 2026-10-26 每个产品单独保存测试步骤和通信参数
+
+### 本轮修改
+
+- `config_store.py`：`config.json` 新增 `product_profiles`，按产品保存 `baud_rate`、`timing`（发送/读取间隔、Watchdog）、`step_plan`（测试步骤 + 冷却时长）。
+  - 顶层 `device.baud_rate` / `timing` / `step_plan` / `sequence` 仍是**当前产品**的值，`main.py` 与运行逻辑不变；保存时当前产品的档案总以顶层为准。
+  - 新增 `switch_product(config, code)`：把当前值存入原产品档案，再载入目标产品档案；目标产品还没有档案时沿用当前值。
+  - 工位（SN / Index / 扫码枪 IP）、PLC、扫码配置为所有产品共用，切换时不变。
+  - 旧 `config.json`（无 `product_profiles`）可直接加载，首次保存时自动生成当前产品档案。
+- `settings_ui.py`：设置页切换“产品型号”时调用 `switch_product` 并保存，表单载入该产品的步骤与通信参数；“通信参数”“测试步骤配置”两个框标题显示当前产品；切换失败时下拉框恢复原产品。
+- 模板会保存完整配置（含 `product_profiles`）。
+
+### 验证结果
+
+- 单测 106 个全部通过（新增 `test_product_profiles.py`）。
+- 真实 Tk 界面脚本验证：A050 改步骤 → 切 A063（沿用）→ 改步骤和发送间隔 → 切回 A050（恢复 A050 的值）→ 再切 A063（恢复 A063 的值），`config.json` 中两份档案正确，工位配置不变。
+- 尚未上实机验证。

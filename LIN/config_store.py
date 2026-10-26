@@ -171,22 +171,21 @@ def validate_config(config: Dict[str, Any], station_override: int | None = None)
     plc1_ip = str(plc.get("plc1_ip", "192.168.10.180")).strip() or "192.168.10.180"
     plc2_ip = str(plc.get("plc2_ip", "192.168.10.181")).strip() or "192.168.10.181"
     scan_start = bool(scan.get("scan_start", False))
-    send_interval_ms = int(timing.get("send_interval_ms", 100))
-    read_interval_ms = int(timing.get("read_interval_ms", 20))
-    watchdog_sec = float(timing.get("watchdog_sec", 5))
 
     if lin_index < 0:
         raise ConfigError("device.lin_index must be >= 0")
     if baud_rate <= 0:
         raise ConfigError("device.baud_rate must be > 0")
-    if send_interval_ms <= 0:
-        raise ConfigError("timing.send_interval_ms must be > 0")
-    if read_interval_ms <= 0:
-        raise ConfigError("timing.read_interval_ms must be > 0")
-    if watchdog_sec <= 0:
-        raise ConfigError("timing.watchdog_sec must be > 0")
+    normalized_timing = _normalize_timing(timing)
     step_plan = _normalize_step_plan(config)
     normalized_sequence = _build_sequence_from_step_plan(step_plan)
+    product_profiles = _normalize_product_profiles(config.get("product_profiles"))
+    # The top-level values are the active product's profile and always win.
+    product_profiles[product_code] = {
+        "baud_rate": baud_rate,
+        "timing": deepcopy(normalized_timing),
+        "step_plan": deepcopy(step_plan),
+    }
 
     return {
         "product": product_code,
@@ -205,14 +204,79 @@ def validate_config(config: Dict[str, Any], station_override: int | None = None)
             "scan_start": scan_start,
         },
         "stations": stations,
-        "timing": {
-            "send_interval_ms": send_interval_ms,
-            "read_interval_ms": read_interval_ms,
-            "watchdog_sec": watchdog_sec,
-        },
+        "timing": normalized_timing,
         "step_plan": step_plan,
         "sequence": normalized_sequence,
+        "product_profiles": {code: product_profiles[code] for code in KNOWN_PRODUCTS if code in product_profiles},
     }
+
+
+def switch_product(config: Dict[str, Any], product_code: str) -> Dict[str, Any]:
+    """Return *config* with *product_code* active.
+
+    The current top-level communication parameters and step plan are stored as
+    the outgoing product's profile; the incoming product's saved profile (if
+    any) replaces them. A product without a saved profile starts from the
+    current values. Stations, PLC and scan settings are shared and untouched.
+    """
+    current = validate_config(config)
+    target_code = str(product_code).strip().upper()
+    if target_code not in KNOWN_PRODUCTS:
+        raise ConfigError(f"product must be one of {KNOWN_PRODUCTS!r}")
+
+    switched = deepcopy(current)
+    switched["product"] = target_code
+    profile = current["product_profiles"].get(target_code)
+    if profile is not None:
+        switched["device"]["baud_rate"] = profile["baud_rate"]
+        switched["timing"] = deepcopy(profile["timing"])
+        switched["step_plan"] = deepcopy(profile["step_plan"])
+        switched.pop("sequence", None)
+    return validate_config(switched)
+
+
+def _normalize_timing(timing: Dict[str, Any]) -> Dict[str, Any]:
+    send_interval_ms = int(timing.get("send_interval_ms", 100))
+    read_interval_ms = int(timing.get("read_interval_ms", 20))
+    watchdog_sec = float(timing.get("watchdog_sec", 5))
+    if send_interval_ms <= 0:
+        raise ConfigError("timing.send_interval_ms must be > 0")
+    if read_interval_ms <= 0:
+        raise ConfigError("timing.read_interval_ms must be > 0")
+    if watchdog_sec <= 0:
+        raise ConfigError("timing.watchdog_sec must be > 0")
+    return {
+        "send_interval_ms": send_interval_ms,
+        "read_interval_ms": read_interval_ms,
+        "watchdog_sec": watchdog_sec,
+    }
+
+
+def _normalize_product_profiles(raw_profiles: Any) -> Dict[str, Dict[str, Any]]:
+    if raw_profiles is None:
+        return {}
+    if not isinstance(raw_profiles, dict):
+        raise ConfigError("product_profiles must be an object")
+
+    profiles: Dict[str, Dict[str, Any]] = {}
+    for raw_code, profile in raw_profiles.items():
+        code = str(raw_code).strip().upper()
+        if code not in KNOWN_PRODUCTS:
+            continue
+        if not isinstance(profile, dict):
+            raise ConfigError(f"product_profiles.{code} must be an object")
+        timing = profile.get("timing")
+        if not isinstance(timing, dict):
+            raise ConfigError(f"product_profiles.{code}.timing section is required")
+        baud_rate = int(profile.get("baud_rate", 19200))
+        if baud_rate <= 0:
+            raise ConfigError(f"product_profiles.{code}.baud_rate must be > 0")
+        profiles[code] = {
+            "baud_rate": baud_rate,
+            "timing": _normalize_timing(timing),
+            "step_plan": _normalize_step_plan({"step_plan": profile.get("step_plan")}),
+        }
+    return profiles
 
 
 def _normalize_step_plan(config: Dict[str, Any]) -> Dict[str, Any]:

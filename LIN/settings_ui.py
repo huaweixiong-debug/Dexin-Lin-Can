@@ -7,6 +7,7 @@ import re
 import itertools
 import csv
 import json
+from copy import deepcopy
 import subprocess
 import sys
 import threading
@@ -28,6 +29,7 @@ from config_store import (
     rename_template,
     save_config,
     save_template,
+    switch_product,
     validate_config,
 )
 from lin_device_manager import lin_device_manager
@@ -186,6 +188,11 @@ class SettingsApp:
         self.run_pcb_temp_var = tk.StringVar(value="-")
         self.run_summary_var = tk.StringVar(value="尚无汇总。")
         self.pcb_temp_label_var = tk.StringVar(value=DEFAULT_PCB_TEMP_LABEL)
+        # Per-product communication parameters / step plans not shown in the form.
+        self._product_profiles: Dict[str, Any] = {}
+        self._form_product_code = DEFAULT_PRODUCT_CODE
+        self.timing_frame: ttk.LabelFrame | None = None
+        self.sequence_frame: ttk.LabelFrame | None = None
 
         self.product_var.trace_add("write", self._refresh_product_presentation)
         self.scanned_device_var.trace_add("write", self._on_scanned_device_var_changed)
@@ -339,21 +346,41 @@ class SettingsApp:
         self.pcb_temp_label_var.set(pcb_temp_label)
         if self.query_tree is not None:
             self.query_tree.heading("pcb_temp", text=pcb_temp_label)
+        if self.timing_frame is not None:
+            self.timing_frame.configure(text=f"{product_code} 通信参数")
+        if self.sequence_frame is not None:
+            self.sequence_frame.configure(text=f"{product_code} 测试步骤配置（功率比例 0% - 100%）")
 
     def _on_product_selected(self, _event: object | None = None) -> None:
-        self._refresh_product_presentation()
+        new_code = self.product_var.get().strip().upper() or DEFAULT_PRODUCT_CODE
+        previous_code = self._form_product_code
+        if new_code == previous_code:
+            self._refresh_product_presentation()
+            return
+
+        has_saved_profile = new_code in self._product_profiles
         try:
-            config = self._collect_form_data()
+            # The form still holds the outgoing product's steps and parameters.
+            form_config = self._collect_form_data()
+            form_config["product"] = previous_code
+            config = switch_product(form_config, new_code)
             save_config(self.config_path, config)
         except (ConfigError, ValueError) as exc:
+            self.product_var.set(previous_code)
             messagebox.showerror("产品切换失败", str(exc))
             self.status_var.set(f"产品切换失败: {exc}")
             return
 
+        self._apply_config_to_form(config)
         if not self._has_running_station_tasks():
             self._start_config_load_worker(config)
         self._refresh_dashboard_headers()
-        self.status_var.set(f"产品型号已切换并保存: {config['product']}")
+        if has_saved_profile:
+            self.status_var.set(f"产品型号已切换为 {new_code}，已载入该产品的测试步骤和通信参数")
+        else:
+            self.status_var.set(
+                f"产品型号已切换为 {new_code}，该产品尚无单独设置，沿用当前测试步骤和通信参数；修改后保存即为 {new_code} 的设置"
+            )
 
     def _short_serial(self, serial: str) -> str:
         serial = str(serial).strip()
@@ -488,6 +515,7 @@ class SettingsApp:
         ttk.Label(plc_frame, textvariable=self.control_service_status_var).grid(row=0, column=3, sticky=tk.W, pady=4)
 
         timing_frame = ttk.LabelFrame(left_column, text="通信参数", padding=10)
+        self.timing_frame = timing_frame
         timing_frame.pack(fill=tk.X, pady=(0, 10))
         ttk.Label(timing_frame, text="波特率").grid(row=0, column=0, sticky=tk.W, padx=(0, 8), pady=4)
         ttk.Entry(timing_frame, textvariable=self.baud_rate_var, width=10).grid(row=0, column=1, sticky=tk.W, pady=4)
@@ -530,6 +558,7 @@ class SettingsApp:
         ttk.Label(left_column, textvariable=self.status_var, foreground="#1f4e79").pack(anchor=tk.W, pady=(10, 0))
 
         sequence_frame = ttk.LabelFrame(right_column, text="测试步骤配置（功率比例 0% - 100%）", padding=10)
+        self.sequence_frame = sequence_frame
         sequence_frame.pack(fill=tk.BOTH, expand=True)
         sequence_headers = ["步骤名", "功率比例", "持续(s)", "操作"]
         for column, header in enumerate(sequence_headers):
@@ -1341,6 +1370,7 @@ class SettingsApp:
                 "cooldown_duration_sec": float(self.cooldown_duration_var.get().strip()),
                 "steps": sequence,
             },
+            "product_profiles": deepcopy(self._product_profiles),
         }
 
     def _render_sequence_rows(self, sequence: List[Dict[str, Any]]) -> None:
@@ -1387,6 +1417,8 @@ class SettingsApp:
             )
 
     def _apply_config_to_form(self, config: Dict[str, Any]) -> None:
+        self._form_product_code = str(config.get("product", DEFAULT_PRODUCT_CODE)).strip().upper() or DEFAULT_PRODUCT_CODE
+        self._product_profiles = deepcopy(config.get("product_profiles") or {})
         self.product_var.set(str(config.get("product", DEFAULT_PRODUCT_CODE)).strip().upper() or DEFAULT_PRODUCT_CODE)
         self.active_station_var.set(str(config.get("active_station_slot", 1)))
         self.baud_rate_var.set(str(config["device"]["baud_rate"]))
