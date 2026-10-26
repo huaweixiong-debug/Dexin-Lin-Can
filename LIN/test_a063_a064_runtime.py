@@ -51,7 +51,7 @@ class CatalogAndRuntimeTests(unittest.TestCase):
         a064 = get_runtime_protocol("a064")
         self.assertEqual((a063.command_pid, a063.status_pid, a063.aux_status_pid), (0x07, 0x08, 0x0A))
         self.assertEqual((a064.command_pid, a064.status_pid, a064.aux_status_pid), (0x15, 0x16, None))
-        self.assertEqual(a063.build_command_payload(100)[:5], [0x01, 0x64, 0x00, 0x64, 0x00])
+        self.assertEqual(a063.build_command_payload(100)[:5], [0x01, 0x64, 0x64, 0x00, 0x00])
         self.assertEqual(a064.build_command_payload(100)[:2], [0x64, 0x02])
 
 
@@ -95,7 +95,7 @@ class PresenterTests(unittest.TestCase):
         self.assertIn("fault=normal/0x0 ", line)
         self.assertIn("current=7A", line)
         self.assertIn("igbt_temp=80C", line)
-        self.assertIn("tx07=01 64 00 64 00 00 00 00", line)
+        self.assertIn("tx07=01 64 64 00 00 00 00 00", line)
         self.assertIn("rx08=01 00 78 D2 07 DC 05 00", line)
 
     def test_a063_fault_line_lists_fault_names(self):

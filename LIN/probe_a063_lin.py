@@ -52,7 +52,7 @@ def _frame(*head: int) -> List[int]:
 
 
 VARIANTS: List[Variant] = [
-    Variant("spec_le16", "需求表格式（当前程序）：PowerSet1=byte1-2，PowerSet2=byte3-4，低字节在前",
+    Variant("spec_le16", "需求表格式（旧程序，16 位）：PowerSet1=byte1-2，PowerSet2=byte3-4，低字节在前",
             lambda p: _frame(0x01, p, 0x00, p, 0x00), 2),
     Variant("left_only", "需求表格式，只开主驾（左）区", lambda p: _frame(0x01, p, 0x00, 0x00, 0x00), 1),
     Variant("right_only", "需求表格式，只开副驾（右）区", lambda p: _frame(0x01, 0x00, 0x00, p, 0x00), 1),
@@ -200,7 +200,7 @@ def summarize(results: List[PhaseResult], percent: int, log: Tee) -> None:
         )
     log("")
     log("怎么看：")
-    log("  - “估算加热区数”由母线电流算出，最可信。spec_le16 约为 2 说明需求表格式正确，两区都在加热。")
+    log("  - “估算加热区数”由母线电流算出，最可信。spec_le16 约为 2 说明需求表格式正确；约为 1 且 u8_adjacent 约为 2 说明产品用 8 位相邻编码（2026-10-26 7 号工位实测为后者）。")
     log("  - spec_le16 约为 1：看 left_only / right_only 哪个能单独加热；再看 u8_adjacent / be16 哪个约为 2，")
     log("    那就是产品实际使用的 0x07 格式。")
     log("  - P1/P2 两列对比“低在前 / 高在前”，哪一种和电流对得上，产品上报 POWER_1/2 就用哪种字节序。")

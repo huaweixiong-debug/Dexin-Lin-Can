@@ -164,15 +164,18 @@ def validate_power_ratio(power_ratio: int) -> int:
 
 
 def build_command_payload(left_ratio: int, right_ratio: int | None = None) -> List[int]:
-    """Encode 0x07: Request in byte0, PowerSet1/PowerSet2 as little-endian u16."""
+    """Encode 0x07: Request in byte0, left/right power as adjacent u8 in bytes 1/2.
+
+    Field probe on 2026-10-26 (station 7) showed the part reads the zones as
+    byte1 = left, byte2 = right.  The 16-bit layout from the requirement table
+    (byte1-2 / byte3-4) only heats the left zone on this firmware.
+    """
     left = validate_power_ratio(left_ratio)
     right = left if right_ratio is None else validate_power_ratio(right_ratio)
     payload = [0x00] * FRAME_SIZE
     payload[0] = 0x01 if (left > 0 or right > 0) else 0x00
     payload[1] = left & 0xFF
-    payload[2] = (left >> 8) & 0xFF
-    payload[3] = right & 0xFF
-    payload[4] = (right >> 8) & 0xFF
+    payload[2] = right & 0xFF
     return payload
 
 

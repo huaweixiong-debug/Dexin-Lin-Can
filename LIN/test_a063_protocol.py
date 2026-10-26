@@ -18,12 +18,12 @@ STATUS_0A_SAMPLE = [0x50, 0x00, 0x00, 0x78, 0x0A, 0x0A, 0x78, 0x00]
 class A063ProtocolTests(unittest.TestCase):
     def test_build_command_payload_matches_sample_frames(self):
         self.assertEqual(build_command_payload(0, 0), [0x00] * 8)
-        self.assertEqual(build_command_payload(100, 100), [0x01, 0x64, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00])
+        self.assertEqual(build_command_payload(100, 100), [0x01, 0x64, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00])
         self.assertEqual(build_command_payload(100, 0), [0x01, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-        self.assertEqual(build_command_payload(0, 50), [0x01, 0x00, 0x00, 0x32, 0x00, 0x00, 0x00, 0x00])
+        self.assertEqual(build_command_payload(0, 50), [0x01, 0x00, 0x32, 0x00, 0x00, 0x00, 0x00, 0x00])
 
     def test_build_command_payload_from_ratio_drives_both_zones(self):
-        self.assertEqual(build_command_payload_from_ratio(30)[:5], [0x01, 30, 0x00, 30, 0x00])
+        self.assertEqual(build_command_payload_from_ratio(30)[:5], [0x01, 30, 30, 0x00, 0x00])
         self.assertEqual(build_command_payload_from_ratio(0)[:5], [0x00, 0x00, 0x00, 0x00, 0x00])
 
     def test_build_command_payload_rejects_out_of_range(self):
