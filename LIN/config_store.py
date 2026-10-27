@@ -25,8 +25,8 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     },
     "plc": {
         "enabled": False,
-        "plc1_ip": "192.168.10.180",
-        "plc2_ip": "192.168.10.181",
+        "plc1_ip": "192.168.8.180",
+        "plc2_ip": "192.168.8.181",
     },
     "scan": {
         "scan_start": False,
@@ -168,8 +168,8 @@ def validate_config(config: Dict[str, Any], station_override: int | None = None)
 
     lin_index = int(selected_station.get("lin_index", fallback_lin_index))
     plc_enabled = bool(plc.get("enabled", False))
-    plc1_ip = str(plc.get("plc1_ip", "192.168.10.180")).strip() or "192.168.10.180"
-    plc2_ip = str(plc.get("plc2_ip", "192.168.10.181")).strip() or "192.168.10.181"
+    plc1_ip = str(plc.get("plc1_ip", "192.168.8.180")).strip() or "192.168.8.180"
+    plc2_ip = str(plc.get("plc2_ip", "192.168.8.181")).strip() or "192.168.8.181"
     scan_start = bool(scan.get("scan_start", False))
 
     if lin_index < 0:

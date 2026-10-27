@@ -1575,8 +1575,8 @@ class SettingsApp:
         self.cooldown_duration_var.set(str(config["step_plan"]["cooldown_duration_sec"]))
         self.plc_enabled_var.set(bool(config.get("plc", {}).get("enabled", False)))
         self.scan_start_var.set(bool(config.get("scan", {}).get("scan_start", False)))
-        self.plc1_ip_var.set(str(config.get("plc", {}).get("plc1_ip", "192.168.10.180")))
-        self.plc2_ip_var.set(str(config.get("plc", {}).get("plc2_ip", "192.168.10.181")))
+        self.plc1_ip_var.set(str(config.get("plc", {}).get("plc1_ip", "192.168.8.180")))
+        self.plc2_ip_var.set(str(config.get("plc", {}).get("plc2_ip", "192.168.8.181")))
 
         stations = config.get("stations", [])
         station_by_slot = {int(station["slot"]): station for station in stations if isinstance(station, dict)}

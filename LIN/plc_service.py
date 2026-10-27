@@ -65,7 +65,7 @@ def decode_station_signals(m_data: bytes | bytearray, local_index: int) -> dict[
 
 
 class PLCController:
-    def __init__(self, plc1_ip: str = "192.168.10.180", plc2_ip: str = "192.168.10.181") -> None:
+    def __init__(self, plc1_ip: str = "192.168.8.180", plc2_ip: str = "192.168.8.181") -> None:
         if snap7 is None or get_bool is None or set_bool is None:
             raise PLCServiceError(f"snap7 unavailable: {_SNAP7_IMPORT_ERROR}")
 
@@ -374,11 +374,14 @@ class PLCController:
         return True
 
     def write_test_result(self, station_idx: int, result: str) -> bool:
+        # Hold PASS/FAIL until the PLC sends a reset signal; the UI clears
+        # both bits in _process_plc_stop_like_signal().  A 2 s pulse was too
+        # short for the PLC program to latch reliably.
         if result == "PASS":
             self.write_status(station_idx, "FAIL", False)
-            return self.write_status_pulse(station_idx, "PASS", 2.0)
+            return self.write_status(station_idx, "PASS", True)
         if result == "FAIL":
             self.write_status(station_idx, "PASS", False)
-            return self.write_status_pulse(station_idx, "FAIL", 2.0)
+            return self.write_status(station_idx, "FAIL", True)
         logger.error("Unknown test result: %s", result)
         return False

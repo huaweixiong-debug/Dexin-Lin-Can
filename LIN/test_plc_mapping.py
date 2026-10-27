@@ -1,6 +1,11 @@
 import unittest
 
-from plc_service import PLC_STATUS_BITS, decode_station_signals, get_station_plc_mapping
+from plc_service import (
+    PLC_STATUS_BITS,
+    PLCController,
+    decode_station_signals,
+    get_station_plc_mapping,
+)
 
 
 class PLCMappingTests(unittest.TestCase):
@@ -39,6 +44,24 @@ class PLCMappingTests(unittest.TestCase):
             get_station_plc_mapping(0)
         with self.assertRaises(ValueError):
             get_station_plc_mapping(11)
+
+
+class PLCResultWriteTests(unittest.TestCase):
+    def _controller(self):
+        plc = PLCController.__new__(PLCController)
+        calls = []
+        plc.write_status = lambda station, status, value=True: calls.append((station, status, value)) or True
+        return plc, calls
+
+    def test_pass_is_held_as_a_level(self):
+        plc, calls = self._controller()
+        self.assertTrue(plc.write_test_result(7, "PASS"))
+        self.assertEqual(calls, [(7, "FAIL", False), (7, "PASS", True)])
+
+    def test_fail_is_held_as_a_level(self):
+        plc, calls = self._controller()
+        self.assertTrue(plc.write_test_result(7, "FAIL"))
+        self.assertEqual(calls, [(7, "PASS", False), (7, "FAIL", True)])
 
 
 if __name__ == "__main__":

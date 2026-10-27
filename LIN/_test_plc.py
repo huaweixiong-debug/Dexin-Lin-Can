@@ -5,8 +5,8 @@ import time
 
 from plc_service import PLCController
 
-plc1_ip = "192.168.10.180"
-plc2_ip = "192.168.10.181"
+plc1_ip = "192.168.8.180"
+plc2_ip = "192.168.8.181"
 
 print("=== PLC Connectivity Test ===")
 plc = PLCController(plc1_ip, plc2_ip)
