@@ -78,7 +78,16 @@ class ProductProfileTests(unittest.TestCase):
         self.assertEqual(back_to_a063["timing"]["send_interval_ms"], 200)
         self.assertEqual(back_to_a063["device"]["baud_rate"], 19200)
         self.assertEqual([step["name"] for step in back_to_a063["step_plan"]["steps"]], ["A063 双区 100%", "A063 双区 50%"])
-        self.assertEqual(back_to_a063["sequence"][1], {"name": "Cooldown 1", "power_ratio": 0, "duration_sec": 5.0})
+        self.assertEqual(
+            back_to_a063["sequence"][1],
+            {
+                "name": "Cooldown 1",
+                "power_ratio": 0,
+                "duration_sec": 5.0,
+                "power_min_w": 0,
+                "power_max_w": 0,
+            },
+        )
 
         back_to_a064 = switch_product(back_to_a063, "A064")
         self.assertEqual(back_to_a064["device"]["baud_rate"], 9600)

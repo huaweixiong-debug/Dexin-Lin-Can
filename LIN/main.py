@@ -27,10 +27,15 @@ from product_presenter import (
 )
 from lin_device_manager import lin_device_manager
 from lin_service import DeviceNotFoundError, LinCommunicationError, LinServiceError
+from power_limits import check_power_lower, check_power_upper
 
 
 class ProductFaultError(LinServiceError):
     """Raised when a product reports a fault that requires immediate shutdown."""
+
+
+class PowerOutOfRangeError(LinServiceError):
+    """Raised when measured power leaves the configured per-step range."""
 
 
 # Consecutive faulty status frames before the run is stopped as NG.
@@ -125,6 +130,12 @@ class SequenceRunner:
             step_max_left_power = 0
             step_max_right_power = 0
             step_last_status = None
+            # Lower limit is judged on the last quarter of the step to avoid
+            # tripping during the heater ramp-up.
+            steady_check_offset = duration_sec * 0.75
+            steady_left_sum = 0.0
+            steady_right_sum = 0.0
+            steady_samples = 0
             self._log(
                 f"[STEP {step_index}/{len(self.config['sequence'])}] "
                 f"{step['name']} | power_ratio={self.current_power_ratio}% "
@@ -140,6 +151,18 @@ class SequenceRunner:
                     self.read_success_count += 1
                     step_last_status = status
                     left_w, right_w = extract_step_power(status, product_code)
+                    upper_msg = check_power_upper(step, left_w, right_w)
+                    if upper_msg:
+                        self._log(
+                            f"[POWER_NG] step {step_index} {step['name']}: {upper_msg}"
+                        )
+                        raise PowerOutOfRangeError(
+                            f"step {step_index} {step['name']}: {upper_msg}"
+                        )
+                    if cycle_start - start_time >= steady_check_offset:
+                        steady_left_sum += left_w
+                        steady_right_sum += right_w
+                        steady_samples += 1
                     step_max_left_power = max(step_max_left_power, left_w)
                     step_max_right_power = max(step_max_right_power, right_w)
                 elapsed = time.time() - cycle_start
@@ -149,6 +172,21 @@ class SequenceRunner:
                         self._stop_event.wait(remaining_sleep)
                     else:
                         time.sleep(remaining_sleep)
+
+            if steady_samples:
+                lower_msg = check_power_lower(
+                    step,
+                    steady_left_sum / steady_samples,
+                    steady_right_sum / steady_samples,
+                    steady_samples,
+                )
+                if lower_msg:
+                    self._log(
+                        f"[POWER_NG] step {step_index} {step['name']}: {lower_msg}"
+                    )
+                    raise PowerOutOfRangeError(
+                        f"step {step_index} {step['name']}: {lower_msg}"
+                    )
 
             self._record_step_summary(
                 step_index=step_index,

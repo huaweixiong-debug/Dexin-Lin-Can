@@ -50,11 +50,11 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "step_plan": {
         "cooldown_duration_sec": 3,
         "steps": [
-            {"name": "Step 1 (100%)", "power_ratio": 100, "duration_sec": 10},
-            {"name": "Step 2 (80%)", "power_ratio": 80, "duration_sec": 10},
-            {"name": "Step 3 (50%)", "power_ratio": 50, "duration_sec": 10},
-            {"name": "Step 4 (30%)", "power_ratio": 30, "duration_sec": 10},
-            {"name": "Step 5 (10%)", "power_ratio": 10, "duration_sec": 10},
+            {"name": "Step 1 (100%)", "power_ratio": 100, "duration_sec": 10, "power_min_w": 0, "power_max_w": 0},
+            {"name": "Step 2 (80%)", "power_ratio": 80, "duration_sec": 10, "power_min_w": 0, "power_max_w": 0},
+            {"name": "Step 3 (50%)", "power_ratio": 50, "duration_sec": 10, "power_min_w": 0, "power_max_w": 0},
+            {"name": "Step 4 (30%)", "power_ratio": 30, "duration_sec": 10, "power_min_w": 0, "power_max_w": 0},
+            {"name": "Step 5 (10%)", "power_ratio": 10, "duration_sec": 10, "power_min_w": 0, "power_max_w": 0},
         ],
     },
 }
@@ -279,6 +279,19 @@ def _normalize_product_profiles(raw_profiles: Any) -> Dict[str, Dict[str, Any]]:
     return profiles
 
 
+def _normalize_power_limits(step: Dict[str, Any], index: int, where: str) -> tuple[float, float]:
+    try:
+        min_w = float(step.get("power_min_w", 0) or 0)
+        max_w = float(step.get("power_max_w", 0) or 0)
+    except (TypeError, ValueError):
+        raise ConfigError(f"{where}[{index}].power_min_w/power_max_w must be numbers")
+    if min_w < 0 or max_w < 0:
+        raise ConfigError(f"{where}[{index}].power_min_w/power_max_w must be >= 0")
+    if min_w > 0 and max_w > 0 and min_w > max_w:
+        raise ConfigError(f"{where}[{index}].power_min_w must be <= power_max_w")
+    return min_w, max_w
+
+
 def _normalize_step_plan(config: Dict[str, Any]) -> Dict[str, Any]:
     if "step_plan" in config:
         step_plan = config.get("step_plan")
@@ -305,12 +318,15 @@ def _normalize_step_plan(config: Dict[str, Any]) -> Dict[str, Any]:
             duration_sec = float(step.get("duration_sec", 0))
             if duration_sec < 0:
                 raise ConfigError(f"step_plan.steps[{index}].duration_sec must be >= 0")
+            power_min_w, power_max_w = _normalize_power_limits(step, index, "step_plan.steps")
 
             normalized_steps.append(
                 {
                     "name": name,
                     "power_ratio": power_ratio,
                     "duration_sec": duration_sec,
+                    "power_min_w": power_min_w,
+                    "power_max_w": power_max_w,
                 }
             )
 
@@ -337,6 +353,8 @@ def _build_sequence_from_step_plan(step_plan: Dict[str, Any]) -> List[Dict[str, 
                 "name": step["name"],
                 "power_ratio": step["power_ratio"],
                 "duration_sec": step["duration_sec"],
+                "power_min_w": step.get("power_min_w", 0),
+                "power_max_w": step.get("power_max_w", 0),
             }
         )
         if index < len(steps):
@@ -345,6 +363,8 @@ def _build_sequence_from_step_plan(step_plan: Dict[str, Any]) -> List[Dict[str, 
                     "name": f"Cooldown {index}",
                     "power_ratio": 0,
                     "duration_sec": cooldown_duration_sec,
+                    "power_min_w": 0,
+                    "power_max_w": 0,
                 }
             )
 
@@ -364,6 +384,7 @@ def _derive_step_plan_from_sequence(sequence: List[Dict[str, Any]]) -> Dict[str,
         duration_sec = float(step.get("duration_sec", 0))
         if duration_sec < 0:
             raise ConfigError(f"sequence[{index}].duration_sec must be >= 0")
+        power_min_w, power_max_w = _normalize_power_limits(step, index, "sequence")
 
         if power_ratio == 0:
             cooldown_duration_sec = duration_sec
@@ -374,6 +395,8 @@ def _derive_step_plan_from_sequence(sequence: List[Dict[str, Any]]) -> Dict[str,
                 "name": name,
                 "power_ratio": power_ratio,
                 "duration_sec": duration_sec,
+                "power_min_w": power_min_w,
+                "power_max_w": power_max_w,
             }
         )
 

@@ -1485,6 +1485,8 @@ class SettingsApp:
                 "name": row["name"].get().strip(),
                 "power_ratio": int(row["power_ratio"].get().strip()),
                 "duration_sec": float(row["duration_sec"].get().strip()),
+                "power_min_w": float(row["power_min_w"].get().strip() or "0"),
+                "power_max_w": float(row["power_max_w"].get().strip() or "0"),
             }
             for row in self.sequence_rows
         ]
@@ -1529,10 +1531,12 @@ class SettingsApp:
 
         self.sequence_rows = []
         for row_index, step in enumerate(sequence):
-            grid_row = row_index + 1
-            name_var = tk.StringVar(value=str(step["name"]))
-            power_var = tk.StringVar(value=str(step["power_ratio"]))
-            duration_var = tk.StringVar(value=str(step["duration_sec"]))
+            grid_row = 1 + row_index * 2
+            name_var = tk.StringVar(value=str(step.get("name", f"Step {row_index + 1}")))
+            power_var = tk.StringVar(value=str(step.get("power_ratio", 10)))
+            duration_var = tk.StringVar(value=str(step.get("duration_sec", 10)))
+            min_var = tk.StringVar(value=str(step.get("power_min_w", 0)))
+            max_var = tk.StringVar(value=str(step.get("power_max_w", 0)))
             ttk.Entry(container, textvariable=name_var, width=18).grid(
                 row=grid_row, column=0, sticky=tk.EW, padx=4, pady=2
             )
@@ -1555,11 +1559,22 @@ class SettingsApp:
                 ttk.Button(button_box, text=text, width=4, style="Compact.TButton", command=command).pack(
                     side=tk.LEFT, padx=(0 if action_index == 0 else 2, 0)
                 )
+
+            limit_frame = ttk.Frame(container)
+            limit_frame.grid(row=grid_row + 1, column=0, columnspan=3, sticky=tk.W, padx=4, pady=(0, 6))
+            ttk.Label(limit_frame, text="功率范围(W)").pack(side=tk.LEFT)
+            ttk.Entry(limit_frame, textvariable=min_var, width=7).pack(side=tk.LEFT, padx=(4, 2))
+            ttk.Label(limit_frame, text="~").pack(side=tk.LEFT)
+            ttk.Entry(limit_frame, textvariable=max_var, width=7).pack(side=tk.LEFT, padx=(2, 4))
+            ttk.Label(limit_frame, text="0 / 0 = 不检查").pack(side=tk.LEFT)
+
             self.sequence_rows.append(
                 {
                     "name": name_var,
                     "power_ratio": power_var,
                     "duration_sec": duration_var,
+                    "power_min_w": min_var,
+                    "power_max_w": max_var,
                 }
             )
 
@@ -1599,6 +1614,8 @@ class SettingsApp:
                 "name": row["name"].get(),
                 "power_ratio": row["power_ratio"].get(),
                 "duration_sec": row["duration_sec"].get(),
+                "power_min_w": row["power_min_w"].get(),
+                "power_max_w": row["power_max_w"].get(),
             }
             for row in self.sequence_rows
         ]
@@ -1608,6 +1625,8 @@ class SettingsApp:
             "name": f"Step {sequence_number}",
             "power_ratio": "10",
             "duration_sec": "10",
+            "power_min_w": "0",
+            "power_max_w": "0",
         }
 
     def _sync_scanned_devices_to_ui(self, devices: List[Dict[str, Any]]) -> None:
